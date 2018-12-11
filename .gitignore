@@ -12,3 +12,4 @@ project/target/
 .cache
 .lib/
 scalarr.conf
+.ensime_cache
