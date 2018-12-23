@@ -12,4 +12,7 @@ project/target/
 .cache
 .lib/
 scalarr.conf
-.ensime_cache
+# Ensime specific
+.ensime
+.ensime_cache/
+.ensime_lucene/
