@@ -1,6 +1,7 @@
 package scalarr
 import com.typesafe.config.{Config,ConfigFactory}
 import com.softwaremill.sttp._
+import org.jline._
 
 object scalarr {
   def main(args: Array[String]): Unit = {
