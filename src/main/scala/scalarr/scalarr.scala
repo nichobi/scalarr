@@ -8,11 +8,12 @@ object scalarr {
     val sonarrBase = "http://localhost:8989/api"
     val keySonarr = config.getString("sonarr.apikey")
 
+    implicit val backend = HttpURLConnectionBackend()
+    
     val firstRequest = sttp
       .get(uri"$sonarrBase/diskspace")
       .header("X-Api-Key", keySonarr)
 
-    implicit val backend = HttpURLConnectionBackend()
     val firstResponse = firstRequest.send()
     
     // firstResponse: Response[String]
