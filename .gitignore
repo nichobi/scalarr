@@ -13,3 +13,4 @@ project/target/
 .lib/
 .metals
 .bloop
+scalarr.conf
