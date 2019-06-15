@@ -6,7 +6,7 @@ import org.jline._
 object scalarr {
   def main(args: Array[String]): Unit = {
     val config = ConfigFactory.load("scalarr.conf")
-    val sonarrBase = "http://localhost:8989/api"
+    val sonarrBase = config.getString("sonarr.adress") + "/api"
     val keySonarr = config.getString("sonarr.apikey")
 
     implicit val backend = HttpURLConnectionBackend()
