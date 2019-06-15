@@ -15,8 +15,8 @@ object scalarr {
       .header("X-Api-Key", keySonarr)
 
     val firstResponse = firstRequest.send()
-    
-    // firstResponse: Response[String]
-    println(firstResponse.body)
+    val parsed = ujson.read(firstResponse.unsafeBody)
+    println(parsed.render(indent = 2))
+    println(parsed(0)("label"))
   }
 }
