@@ -11,8 +11,5 @@ project/target/
 .history
 .cache
 .lib/
-scalarr.conf
-# Ensime specific
-.ensime
-.ensime_cache/
-.ensime_lucene/
+.metals
+.bloop
