@@ -19,4 +19,15 @@ object scalarr {
     val parsed = ujson.read(response.unsafeBody)
     println(s"label = ${parsed(0)("label")}")
   }
+
+  def interactive = {
+    var keepGoing = true
+    while(keepGoing) {
+      scala.io.StdIn.readLine() match {
+        case "test" => println("hi")
+        case "exit" => keepGoing = false; println("goodbye")
+        case _ => println("i see")
+      }
+    }
+  }
 }
