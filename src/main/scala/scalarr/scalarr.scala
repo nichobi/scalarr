@@ -22,11 +22,13 @@ object scalarr {
 
   def interactive = {
     var keepGoing = true
+    val reader = jline.reader.LineReaderBuilder.builder.build()
     while(keepGoing) {
-      scala.io.StdIn.readLine() match {
-        case "test" => println("hi")
-        case "exit" => keepGoing = false; println("goodbye")
-        case _ => println("i see")
+       reader.readLine.split(" ").toList match {
+        case "hello" :: tail => println("hi")
+        case "add" :: tail => 
+        case "exit" :: tail => keepGoing = false; println("goodbye")
+        case _ => println("Unkown command")
       }
     }
   }
