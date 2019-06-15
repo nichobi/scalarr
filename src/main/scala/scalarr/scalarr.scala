@@ -11,13 +11,12 @@ object scalarr {
 
     implicit val backend = HttpURLConnectionBackend()
     
-    val firstRequest = sttp
+    val request = sttp
       .get(uri"$sonarrBase/diskspace")
       .header("X-Api-Key", keySonarr)
 
-    val firstResponse = firstRequest.send()
-    val parsed = ujson.read(firstResponse.unsafeBody)
-    println(parsed.render(indent = 2))
-    println(parsed(0)("label"))
+    val response = request.send()
+    val parsed = ujson.read(response.unsafeBody)
+    println(s"label = ${parsed(0)("label")}")
   }
 }
