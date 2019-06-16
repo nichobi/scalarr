@@ -1,23 +1,24 @@
 package scalarr
 import com.typesafe.config.{Config,ConfigFactory}
-import com.softwaremill.sttp._
 import org.jline
 
 object scalarr {
-  def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load("scalarr.conf")
-    val sonarrBase = config.getString("sonarr.adress") + "/api"
-    val keySonarr = config.getString("sonarr.apikey")
+  val config = ConfigFactory.load("scalarr.conf")
+  val sonarrAddress = config.getString("sonarr.adress")
+  val sonarrKey = config.getString("sonarr.apikey")
+  val sonarr = Sonarr(sonarrAddress, sonarrKey)
 
-    implicit val backend = HttpURLConnectionBackend()
-    
-    val request = sttp
-      .get(uri"$sonarrBase/diskspace")
-      .header("X-Api-Key", keySonarr)
+  def main(args: Array[String] = Array.empty[String]): Unit = {
+    interactive
 
-    val response = request.send()
-    val parsed = ujson.read(response.unsafeBody)
-    println(s"label = ${parsed(0)("label")}")
+//    val request = sttp
+//      .get(uri"$sonarrBase/diskspace")
+//      .header("X-Api-Key", keySonarr)
+//
+//    val response = request.send()
+//    val parsed = ujson.read(response.unsafeBody)
+//    println(s"label = ${parsed(0)("label")}")
+
   }
 
   def interactive = {
