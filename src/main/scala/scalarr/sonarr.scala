@@ -15,11 +15,9 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   }
 
   def search(query: String) = {
-    val request = sttp
-      .get(uri"$base/series/lookup")
-      .header("X-Api-Key", apiKey)
-    val response = request.send()
-    println(response)
+    val result = get("series/lookup", ("term", query))
+    formatSeries(result).take(5).reverse.foreach(println)
+    //result.foreach(x => println(formatSeries(x)))
   }
 
   def formatSeries(seriesList: ujson.Value): Seq[String] = {
