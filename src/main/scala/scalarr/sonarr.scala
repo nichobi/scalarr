@@ -1,8 +1,8 @@
 package scalarr
 import com.softwaremill.sttp._
-case class Sonarr(address: String, apiKey: String){
+case class Sonarr(address: String, port: Int, apiKey: String){
 
-  val base = address + "/api"
+  val base = Uri(address).port(port).path("/api")
   implicit val backend = HttpURLConnectionBackend()
   def search(query: String) = {
     val request = sttp

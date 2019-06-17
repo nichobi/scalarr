@@ -1,5 +1,5 @@
-//https://danielasfregola.com/2015/06/01/loading-configurations-in-scala/
 sonarr {
+  address = "localhost"
+  port = 8989
   apikey = ""
-  adress = "http://localhost:8989"
 }

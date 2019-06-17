@@ -4,9 +4,10 @@ import org.jline
 
 object scalarr {
   val config = ConfigFactory.load("scalarr.conf")
-  val sonarrAddress = config.getString("sonarr.adress")
+  val sonarrAddress = config.getString("sonarr.address")
+  val sonarrPort = config.getInt("sonarr.port")
   val sonarrKey = config.getString("sonarr.apikey")
-  val sonarr = Sonarr(sonarrAddress, sonarrKey)
+  val sonarr = Sonarr(sonarrAddress, sonarrPort, sonarrKey)
 
   def main(args: Array[String] = Array.empty[String]): Unit = {
     interactive
