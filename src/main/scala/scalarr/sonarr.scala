@@ -22,11 +22,13 @@ case class Sonarr(address: String, port: Int, apiKey: String){
 }
 
 case class Series(json: ujson.Value) {
+  val tvdbId = json("tvdbId").num.toInt
   val title = json("title").str
   val year = json("year").num.toInt
   val status = json("status").str
   val seasonCount = json("seasonCount").num.toInt
 
-  override def toString = s"""$title - $year
+  override def toString = s"$title ($year) - $tvdbId"
+  def formatted = s"""$title - $year
     |  $status - Seasons: $seasonCount""".stripMargin
 }

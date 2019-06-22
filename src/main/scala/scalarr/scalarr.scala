@@ -40,7 +40,7 @@ object scalarr {
     val results = sonarr.lookup(term)
     if(results.isEmpty) println("no results")
     else {
-      results.zipWithIndex.foreach{case (s, i) => println(s"($i) $s")}
+      results.zipWithIndex.foreach{case (s, i) => println(s"($i) ${s.formatted}")}
       Try(reader.readLine("Add: ").toInt) match {
         case Success(value) if(results.indices.contains(value)) =>
           add(results(value))
