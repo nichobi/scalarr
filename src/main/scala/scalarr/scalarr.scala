@@ -29,15 +29,15 @@ object scalarr {
     while(keepGoing) {
        reader.readLine.split(" ").toList match {
         case "hello" :: tail => println("hi")
-        case "search" :: tail => search(tail.mkString(" "))
+        case "lookup" :: tail => lookup(tail.mkString(" "))
         case "exit" :: tail => keepGoing = false; println("goodbye")
         case _ => println("Unkown command")
       }
     }
   }
   
-  def search(term: String)(implicit reader: org.jline.reader.LineReader) = {
-    val results = sonarr.search(term)
+  def lookup(term: String)(implicit reader: org.jline.reader.LineReader) = {
+    val results = sonarr.lookup(term)
     if(results.isEmpty) println("no results")
     else {
       results.zipWithIndex.foreach{case (s, i) => println(s"($i) $s")}

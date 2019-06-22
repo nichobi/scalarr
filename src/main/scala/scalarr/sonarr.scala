@@ -14,8 +14,8 @@ case class Sonarr(address: String, port: Int, apiKey: String){
     parsed
   }
 
-  def search(query: String, resultSize: Int = 5): Seq[Series] = {
-    get("series/lookup", ("term", query)).arr.take(resultSize) .toSeq
+  def lookup(query: String, resultSize: Int = 5): Seq[Series] = {
+    get("series/lookup", ("term", query)).arr.take(resultSize).toSeq
       .map(x => Series(x))
   }
 
