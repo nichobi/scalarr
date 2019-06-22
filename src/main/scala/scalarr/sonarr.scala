@@ -14,17 +14,19 @@ case class Sonarr(address: String, port: Int, apiKey: String){
     parsed
   }
 
-  def search(query: String) = {
-    val result = get("series/lookup", ("term", query))
-    formatSeries(result).take(5).reverse.foreach(println)
-    //result.foreach(x => println(formatSeries(x)))
+  def search(query: String, resultSize: Int = 5): Seq[Series] = {
+    get("series/lookup", ("term", query)).arr.take(resultSize) .toSeq
+      .map(x => Series(x))
   }
 
-  def formatSeries(seriesList: ujson.Value): Seq[String] = {
-    for(i <- seriesList.arr.indices) yield{
-      val series = seriesList(i)
-      s"""($i) ${series("title").str} - ${series("year").num.toInt}
-     |  ${series("status").str} - Seasons: ${series("seasonCount").num.toInt} """.stripMargin
-    }
-  }
+}
+
+case class Series(json: ujson.Value) {
+  val title = json("title").str
+  val year = json("year").num.toInt
+  val status = json("status").str
+  val seasonCount = json("seasonCount").num.toInt
+
+  override def toString = s"""$title - $year
+    |  $status - Seasons: $seasonCount""".stripMargin
 }
