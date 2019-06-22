@@ -19,6 +19,8 @@ case class Sonarr(address: String, port: Int, apiKey: String){
       .map(x => Series(x))
   }
 
+  def series = get("series").arr.toSeq.map(x => Series(x))
+
 }
 
 case class Series(json: ujson.Value) {
