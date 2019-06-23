@@ -1,6 +1,8 @@
 package scalarr
 import com.softwaremill.sttp._
 import ujson._
+import scala.util.control.Exception.allCatch
+
 case class Sonarr(address: String, port: Int, apiKey: String){
 
   val base = Uri(address).port(port).path("/api")
@@ -21,16 +23,19 @@ case class Sonarr(address: String, port: Int, apiKey: String){
 
   def allSeries = get("series").arr.toSeq.map(x => Series(x))
 
+  def series(id: Int) = Series(get(s"series/$id"))
+
 }
 
 case class Series(json: ujson.Value) {
   val tvdbId = json("tvdbId").num.toInt
+  val id = allCatch.opt(json("id").num.toInt)
   val title = json("title").str
   val year = json("year").num.toInt
   val status = json("status").str
   val seasonCount = json("seasonCount").num.toInt
 
-  override def toString = s"$title ($year) - $tvdbId"
+  override def toString = s"$title ($year) - ${id getOrElse tvdbId}"
   def formatted = s"""$title - $year
     |  $status - Seasons: $seasonCount""".stripMargin
 }
