@@ -1,7 +1,9 @@
 package scalarr
 import com.typesafe.config.{Config,ConfigFactory}
 import org.jline
+import org.jline.reader.impl.completer.StringsCompleter
 import scala.util.{Try, Success, Failure}
+import scala.collection.JavaConverters._
 
 object scalarr {
   val config = ConfigFactory.load("scalarr.conf")
@@ -25,7 +27,10 @@ object scalarr {
 
   def interactive = {
     var keepGoing = true
-    implicit val reader = jline.reader.LineReaderBuilder.builder.build()
+    val completionStrings = Seq("hello", "lookup", "exit")
+    val completer = new StringsCompleter(completionStrings.asJava)
+    implicit val reader = jline.reader.LineReaderBuilder.builder
+      .completer(completer).build()
     while(keepGoing) {
        reader.readLine.split(" ").toList match {
         case "hello" :: tail => println("hi")
