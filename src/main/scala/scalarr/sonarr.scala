@@ -19,7 +19,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
       .map(x => Series(x))
   }
 
-  def series = get("series").arr.toSeq.map(x => Series(x))
+  def allSeries = get("series").arr.toSeq.map(x => Series(x))
 
 }
 
