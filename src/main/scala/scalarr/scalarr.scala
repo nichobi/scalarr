@@ -32,7 +32,7 @@ object scalarr {
     implicit val reader = jline.reader.LineReaderBuilder.builder
       .completer(completer).build()
     while(keepGoing) {
-       reader.readLine.split(" ").toList match {
+       reader.readLine("Command: ").split(" ").toList match {
         case "hello" :: tail => println("hi")
         case "lookup" :: tail => lookup(tail.mkString(" "))
         case "exit" :: tail => keepGoing = false; println("goodbye")
