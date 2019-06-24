@@ -25,6 +25,9 @@ case class Sonarr(address: String, port: Int, apiKey: String){
 
   def series(id: Int) = Series(get(s"series/$id"))
 
+ def getEpisodes(id: Int): Map[Int, Seq[Episode]] = 
+   get("episode", ("seriesId", id.toString)).arr.toSeq.map(ep => Episode(ep))
+     .groupBy(ep => ep.seasonNumber)
 }
 
 case class Series(json: ujson.Value) {
@@ -37,3 +40,13 @@ case class Series(json: ujson.Value) {
 
   override def toString = s"$title ($year) - ${id getOrElse tvdbId}"
 }
+
+case class Episode(json: ujson.Value) {
+  val seasonNumber = json("seasonNumber").num.toInt
+  val episodeNumber = json("episodeNumber").num.toInt
+  val title = json("title").str
+
+  override def toString = 
+    s"""S${f"$seasonNumber%02d"}E${f"$episodeNumber%02d"} - $title"""
+} 
+
