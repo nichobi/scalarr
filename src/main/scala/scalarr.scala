@@ -31,11 +31,12 @@ object scalarr {
     val completer = new StringsCompleter(completionStrings.asJava)
     implicit val reader = jline.reader.LineReaderBuilder.builder
       .completer(completer).build()
+    println("Welcome to Scalarr")
     while(keepGoing) {
        reader.readLine("Command: ").split(" ").toList match {
         case "hello" :: tail => println("hi")
         case "lookup" :: tail => lookup(tail.mkString(" "))
-        case "exit" :: tail => keepGoing = false; println("goodbye")
+        case "exit" :: tail => keepGoing = false; println("Exiting...")
         case _ => println("Unkown command")
       }
     }
@@ -46,10 +47,10 @@ object scalarr {
     if(results.isEmpty) println("no results")
     else {
       results.zipWithIndex.foreach{case (s, i) => println(s"($i) ${s.formatted}")}
-      Try(reader.readLine("Add: ").toInt) match {
+      Try(reader.readLine("Add series (index): ").toInt) match {
         case Success(value) if(results.indices.contains(value)) =>
           add(results(value))
-        case _ => println("No series added")
+        case _ => println("Invalid selection")
       }
     }
   }
