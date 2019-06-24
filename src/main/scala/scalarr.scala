@@ -42,7 +42,7 @@ object scalarr {
       }
     }
   }
-  
+
   def lookup(term: String)(implicit reader: LineReader) = {
     val results = sonarr.lookup(term)
     if(results.isEmpty) println("no results")
@@ -56,7 +56,7 @@ object scalarr {
     }
 
     def lookupFormat(s: Series, i: Int): String = s"""($i) ${s.title} - ${s.year}
-   |    ${s.status} - Seasons: ${s.seasonCount}""".stripMargin
+     |    ${s.status} - Seasons: ${s.seasonCount}""".stripMargin
   }
 
   def add(series: Series) = ???
