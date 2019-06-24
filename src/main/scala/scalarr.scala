@@ -46,13 +46,16 @@ object scalarr {
     val results = sonarr.lookup(term)
     if(results.isEmpty) println("no results")
     else {
-      results.zipWithIndex.foreach{case (s, i) => println(s"($i) ${s.formatted}")}
+      results.zipWithIndex.foreach{case (s, i) => println(lookupFormat(s, i))}
       Try(reader.readLine("Add series (index): ").toInt) match {
         case Success(value) if(results.indices.contains(value)) =>
           add(results(value))
         case _ => println("Invalid selection")
       }
     }
+
+    def lookupFormat(s: Series, i: Int): String = s"""($i) ${s.title} - ${s.year}
+   |    ${s.status} - Seasons: ${s.seasonCount}""".stripMargin
   }
 
   def add(series: Series) = ???

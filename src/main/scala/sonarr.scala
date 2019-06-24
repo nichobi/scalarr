@@ -36,6 +36,4 @@ case class Series(json: ujson.Value) {
   val seasonCount = json("seasonCount").num.toInt
 
   override def toString = s"$title ($year) - ${id getOrElse tvdbId}"
-  def formatted = s"""$title - $year
-    |  $status - Seasons: $seasonCount""".stripMargin
 }
