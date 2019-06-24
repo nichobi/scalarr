@@ -4,6 +4,7 @@ import org.jline
 import org.jline.reader.impl.completer.StringsCompleter
 import scala.util.{Try, Success, Failure}
 import scala.collection.JavaConverters._
+import org.jline.reader.LineReader
 
 object scalarr {
   val config = ConfigFactory.load("scalarr.conf")
@@ -42,7 +43,7 @@ object scalarr {
     }
   }
   
-  def lookup(term: String)(implicit reader: org.jline.reader.LineReader) = {
+  def lookup(term: String)(implicit reader: LineReader) = {
     val results = sonarr.lookup(term)
     if(results.isEmpty) println("no results")
     else {
