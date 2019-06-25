@@ -29,7 +29,7 @@ object scalarr {
 
   def interactive = {
     var keepGoing = true
-    val completionStrings = Seq("hello", "lookup", "exit")
+    val completionStrings = Seq("hello", "lookup", "exit", "series")
     val completer = new StringsCompleter(completionStrings.asJava)
     implicit val reader = jline.reader.LineReaderBuilder.builder
       .completer(completer).build()
@@ -38,6 +38,7 @@ object scalarr {
        reader.readLine("Command: ").split(" ").toList match {
         case "hello" :: tail => println("hi")
         case "lookup" :: tail => lookup(tail.mkString(" "))
+        case "series" :: tail => series(tail.mkString(" "))
         case "exit" :: tail => keepGoing = false; println("Exiting...")
         case _ => println("Unkown command")
       }
@@ -59,6 +60,15 @@ object scalarr {
     def lookupFormat(s: Series): String = s"""${s.title} - ${s.year}
      |    ${s.status} - Seasons: ${s.seasonCount}""".stripMargin
 
+  }
+
+  def series(query: String)(implicit reader: LineReader) = {
+    val result = sonarr.seriesSearch(query)
+    chooseFrom(result, "Series: ") match {
+      case Some(series) =>
+        chooseFrom(sonarr.getEpisodes(series.id.get), "Season: ")
+      case _ => println("No matching series")
+    }
   }
 
   def add(series: Series) = ???

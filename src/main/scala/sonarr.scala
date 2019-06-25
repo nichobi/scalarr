@@ -25,9 +25,20 @@ case class Sonarr(address: String, port: Int, apiKey: String){
 
   def series(id: Int) = Series(get(s"series/$id"))
 
- def getEpisodes(id: Int): Map[Int, Seq[Episode]] =
-   get("episode", ("seriesId", id.toString)).arr.toSeq.map(ep => Episode(ep))
-     .groupBy(ep => ep.seasonNumber)
+  def getEpisodes(id: Int): Seq[Season] = {
+    val episodes = get("episode", ("seriesId", id.toString)).arr.toSeq
+      .map(ep => Episode(ep))
+    
+    def episodesToSeasons(eps: Seq[Episode]) = {
+      eps.groupBy(_.seasonNumber).map(x => Season(x._1, x._2))
+    }
+
+    episodesToSeasons(episodes).toSeq.sortBy(_.n)
+  }
+
+  def seriesSearch(query: String, resultSize: Int = 5): Seq[Series] = {
+    allSeries.filter(_.title.toLowerCase.contains(query))
+  }
 
   def version = get("system/status")("version").str
 }
@@ -52,3 +63,6 @@ case class Episode(json: ujson.Value) {
     s"""S${f"$seasonNumber%02d"}E${f"$episodeNumber%02d"} - $title"""
 }
 
+case class Season(n: Int, eps: Seq[Episode]){
+  override def toString = if(n == 0) "Specials" else s"Season $n"
+}
