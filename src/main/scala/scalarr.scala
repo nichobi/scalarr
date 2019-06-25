@@ -5,6 +5,7 @@ import org.jline.reader.impl.completer.StringsCompleter
 import scala.util.{Try, Success, Failure}
 import scala.collection.JavaConverters._
 import org.jline.reader.LineReader
+import scala.util.control.Exception.allCatch
 
 object scalarr {
   val config = ConfigFactory.load("scalarr.conf")
@@ -47,17 +48,30 @@ object scalarr {
     val results = sonarr.lookup(term)
     if(results.isEmpty) println("no results")
     else {
-      results.zipWithIndex.foreach{case (s, i) => println(lookupFormat(s, i))}
-      Try(reader.readLine("Add series (index): ").toInt) match {
-        case Success(value) if(results.indices.contains(value)) =>
-          add(results(value))
+      chooseFrom(results, "Add series: ", lookupFormat) match {
+        case Some(series) =>
+          println(s"Adding series: ${series.title}");
+          add(series)
         case _ => println("Invalid selection")
       }
     }
 
-    def lookupFormat(s: Series, i: Int): String = s"""($i) ${s.title} - ${s.year}
+    def lookupFormat(s: Series): String = s"""${s.title} - ${s.year}
      |    ${s.status} - Seasons: ${s.seasonCount}""".stripMargin
+
   }
 
   def add(series: Series) = ???
+
+  def makeString[A](a: A) = a.toString
+  def chooseFrom[A] (options: Seq[A], prompt: String)
+                    (implicit reader: LineReader): Option[A] = {
+    chooseFrom(options, prompt, makeString)
+  }
+
+  def chooseFrom[A] (options: Seq[A], prompt: String, f: A => String) 
+                    (implicit reader: LineReader): Option[A] = {
+      options.zipWithIndex.foreach({case (o, i) => println(s"($i) ${f(o)}")})
+      allCatch.opt(options(reader.readLine(prompt).toInt)) 
+  }
 }
