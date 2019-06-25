@@ -28,6 +28,8 @@ case class Sonarr(address: String, port: Int, apiKey: String){
  def getEpisodes(id: Int): Map[Int, Seq[Episode]] =
    get("episode", ("seriesId", id.toString)).arr.toSeq.map(ep => Episode(ep))
      .groupBy(ep => ep.seasonNumber)
+
+  def version = get("system/status")("version").str
 }
 
 case class Series(json: ujson.Value) {

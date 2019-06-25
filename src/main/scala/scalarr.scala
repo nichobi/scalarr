@@ -33,7 +33,7 @@ object scalarr {
     val completer = new StringsCompleter(completionStrings.asJava)
     implicit val reader = jline.reader.LineReaderBuilder.builder
       .completer(completer).build()
-    println("Welcome to Scalarr")
+    println(s"Connected to Sonarr ${sonarr.version} at $sonarrAddress:$sonarrPort")
     while(keepGoing) {
        reader.readLine("Command: ").split(" ").toList match {
         case "hello" :: tail => println("hi")
