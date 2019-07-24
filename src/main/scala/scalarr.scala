@@ -9,6 +9,14 @@ import scala.util.control.Exception.allCatch
 import scala.collection.SortedMap
 
 object scalarr {
+  val scalarrLogo = """
+ ____
+/    '              |
+\____   .--.  .--.  |  .--.  . __  . __
+     \ /     /   \  | /   \  |/  ' |/  '
+'____/ \.__, \___/\,| \___/\,|     |
+
+""".linesIterator.filter(!_.isEmpty).mkString("\n")
   val config = ConfigFactory.load("scalarr.conf")
   val sonarrAddress = config.getString("sonarr.address")
   val sonarrPort = config.getInt("sonarr.port")
@@ -16,6 +24,7 @@ object scalarr {
   val sonarr = Sonarr(sonarrAddress, sonarrPort, sonarrKey)
 
   def main(args: Array[String] = Array.empty[String]): Unit = {
+    println(scalarrLogo)
     println(s"Connected to Sonarr ${sonarr.version} at $sonarrAddress:$sonarrPort")
     interactive
   }
