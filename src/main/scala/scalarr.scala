@@ -6,6 +6,7 @@ import scala.util.{Try, Success, Failure}
 import scala.collection.JavaConverters._
 import org.jline.reader.LineReader
 import scala.util.control.Exception.allCatch
+import scala.collection.SortedMap
 
 object scalarr {
   val config = ConfigFactory.load("scalarr.conf")
@@ -66,9 +67,18 @@ object scalarr {
     val result = sonarr.seriesSearch(query)
     chooseFrom(result, "Series: ") match {
       case Some(series) =>
-        chooseFrom(sonarr.getEpisodes(series.id.get), "Season: ")
+        println(series.toString)
+        chooseFrom(sonarr.getEpisodes(series.id.get), "Season: ", makeString, seasonN) match {
+          case Some(season) => chooseFrom(season.eps, "Episode: ", makeString, epN) match {
+            case Some(episode) => println(episode.toString)
+            case _ => println("No matching episode")
+          }
+          case _ => println("No matching episode")
+        }
       case _ => println("No matching series")
     }
+    def seasonN(s: Season) = s.n
+    def epN(ep: Episode) = ep.episodeNumber
   }
 
   def add(series: Series) = ???
