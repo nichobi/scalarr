@@ -41,6 +41,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   }
 
   def version = get("system/status")("version").str
+  def diskSpace = get("diskspace").arr.map(json => DiskSpace(json))
 }
 
 case class Series(json: ujson.Value) {
@@ -65,4 +66,13 @@ case class Episode(json: ujson.Value) {
 
 case class Season(n: Int, eps: Seq[Episode]){
   override def toString = if(n == 0) "Specials" else s"Season $n"
+}
+
+case class DiskSpace(json: ujson.Value) {
+  val path = json("path").str
+  val freeSpace = json("freeSpace").num
+  val totalSpace = json("totalSpace").num
+
+  override def toString = s"$path: $percentUsed% used"
+  def percentUsed = ((1 - freeSpace / totalSpace) * 100 + 0.5).toInt
 }
