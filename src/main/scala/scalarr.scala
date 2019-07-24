@@ -16,16 +16,8 @@ object scalarr {
   val sonarr = Sonarr(sonarrAddress, sonarrPort, sonarrKey)
 
   def main(args: Array[String] = Array.empty[String]): Unit = {
+    println(s"Connected to Sonarr ${sonarr.version} at $sonarrAddress:$sonarrPort")
     interactive
-
-//    val request = sttp
-//      .get(uri"$sonarrBase/diskspace")
-//      .header("X-Api-Key", keySonarr)
-//
-//    val response = request.send()
-//    val parsed = ujson.read(response.unsafeBody)
-//    println(s"label = ${parsed(0)("label")}")
-
   }
 
   def interactive = {
@@ -34,7 +26,6 @@ object scalarr {
     val completer = new StringsCompleter(completionStrings.asJava)
     implicit val reader = jline.reader.LineReaderBuilder.builder
       .completer(completer).build()
-    println(s"Connected to Sonarr ${sonarr.version} at $sonarrAddress:$sonarrPort")
     while(keepGoing) {
        reader.readLine("Command: ").split(" ").toList match {
         case "hello" :: tail => println("hi")
