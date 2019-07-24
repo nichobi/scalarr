@@ -79,9 +79,23 @@ object scalarr {
     chooseFrom(options, prompt, makeString)
   }
 
-  def chooseFrom[A] (options: Seq[A], prompt: String, f: A => String) 
+  def chooseFrom[A] (options: Seq[A], prompt: String, f: A => String)
                     (implicit reader: LineReader): Option[A] = {
-      options.zipWithIndex.foreach({case (o, i) => println(s"($i) ${f(o)}")})
-      allCatch.opt(options(reader.readLine(prompt).toInt)) 
+      if(options.size == 1) Some(options.head)
+      else {
+        options.zipWithIndex.foreach({case (o, i) => println(s"($i) ${f(o)}")})
+        allCatch.opt(options(reader.readLine(prompt).toInt))
+      }
+  }
+
+  def chooseFrom[A] (options: Seq[A], prompt: String, 
+                     fString: A => String, indexer: A => Int)
+                    (implicit reader: LineReader): Option[A] = {
+      if(options.size == 1) Some(options.head)
+      else {
+        val map = SortedMap.empty[Int, A] ++ options.map(x => indexer(x) -> x)
+        map.foreach{case (i, x) => println(s"($i) ${fString(x)}")}
+        allCatch.opt(map(reader.readLine(prompt).toInt))
+      }
   }
 }
