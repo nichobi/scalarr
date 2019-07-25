@@ -31,7 +31,7 @@ object scalarr {
 
   def interactive = {
     var keepGoing = true
-    val completionStrings = Seq("hello", "lookup", "exit", "series")
+    val completionStrings = Seq("hello", "lookup", "exit", "series").sorted
     val completer = new StringsCompleter(completionStrings.asJava)
     implicit val reader = jline.reader.LineReaderBuilder.builder
       .completer(completer).build()
