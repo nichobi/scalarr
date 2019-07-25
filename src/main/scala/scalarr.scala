@@ -16,7 +16,7 @@ object scalarr {
      \ /     /   \  | /   \  |/  ' |/  '
 '____/ \.__, \___/\,| \___/\,|     |
 
-""".linesIterator.filter(!_.isEmpty).mkString("\n")
+""".drop(1).dropRight(2)
   val config = ConfigFactory.load("scalarr.conf")
   val sonarrAddress = config.getString("sonarr.address")
   val sonarrPort = config.getInt("sonarr.port")
