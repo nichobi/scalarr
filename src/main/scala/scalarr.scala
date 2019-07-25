@@ -3,7 +3,7 @@ import com.typesafe.config.{Config,ConfigFactory}
 import org.jline
 import org.jline.reader.impl.completer.StringsCompleter
 import scala.util.{Try, Success, Failure}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import org.jline.reader.LineReader
 import scala.util.control.Exception.allCatch
 import scala.collection.SortedMap
