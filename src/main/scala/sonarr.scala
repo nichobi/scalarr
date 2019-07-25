@@ -21,9 +21,9 @@ case class Sonarr(address: String, port: Int, apiKey: String){
       .map(x => Series(x))
   }
 
-  def allSeries = get("series").arr.toSeq.map(x => Series(x))
+  def allSeries = get("series").arr.toSeq.map(x => AddedSeries(x))
 
-  def series(id: Int) = Series(get(s"series/$id"))
+  def series(id: Int) = AddedSeries(get(s"series/$id"))
 
   def getEpisodes(id: Int): Seq[Season] = {
     val episodes = get("episode", ("seriesId", id.toString)).arr.toSeq
@@ -36,7 +36,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
     episodesToSeasons(episodes).toSeq.sortBy(_.n)
   }
 
-  def seriesSearch(query: String, resultSize: Int = 5): Seq[Series] = {
+  def seriesSearch(query: String, resultSize: Int = 5): Seq[AddedSeries] = {
     allSeries.filter(_.title.toLowerCase.contains(query))
   }
 
@@ -44,15 +44,33 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   def diskSpace = get("diskspace").arr.map(json => DiskSpace(json))
 }
 
-case class Series(json: ujson.Value) {
+class Series(json: ujson.Value) {
   val tvdbId = json("tvdbId").num.toInt
-  val id = allCatch.opt(json("id").num.toInt)
   val title = json("title").str
   val year = json("year").num.toInt
   val status = json("status").str
   val seasonCount = json("seasonCount").num.toInt
 
-  override def toString = s"$title ($year) - ${id getOrElse tvdbId}"
+  override def toString = s"$title ($year) - tvdb:$tvdbId"
+}
+object Series {
+  def apply(json: ujson.Value) = {
+    if(json.obj.contains("id")) new AddedSeries(json)
+    else new LookupSeries(json)
+  }
+}
+
+class AddedSeries(json: ujson.Value) extends Series(json) {
+  val id = json("id").num.toInt
+
+  override def toString = s"$title ($year) - id:$id"
+}
+object AddedSeries {
+  def apply(json: ujson.Value) = new AddedSeries(json)
+}
+
+class LookupSeries(json: ujson.Value) extends Series(json) {
+  def add(path: String) = ???
 }
 
 case class Episode(json: ujson.Value) {

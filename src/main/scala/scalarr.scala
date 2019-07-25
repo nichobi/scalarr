@@ -68,7 +68,7 @@ object scalarr {
     chooseFrom(result, "Series: ") match {
       case Some(series) =>
         println(series.toString)
-        chooseFrom(sonarr.getEpisodes(series.id.get), "Season: ", makeString, seasonN) match {
+        chooseFrom(sonarr.getEpisodes(series.id), "Season: ", makeString, seasonN) match {
           case Some(season) => chooseFrom(season.eps, "Episode: ", makeString, epN) match {
             case Some(episode) => println(episode.toString)
             case _ => println("No matching episode")
