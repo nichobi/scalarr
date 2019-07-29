@@ -17,7 +17,16 @@ object scalarr {
 '____/ \.__, \___/\,| \___/\,|     |
 
 """.drop(1).dropRight(2)
-  val config = ConfigFactory.load("scalarr.conf")
+  val configFolder = os.home/".config"/"scalarr"
+  val configFile = configFolder/"scalarr.conf"
+  if(!os.exists(configFolder)) {
+    os.makeDir.all(configFolder)
+  }
+  if(!os.exists(configFile)) {
+    val defaultConfig = os.read(os.resource/"scalarr.conf")
+    os.write(configFile, defaultConfig)
+  }
+  val config = ConfigFactory.parseFile(configFile.toIO)
   val sonarrAddress = config.getString("sonarr.address")
   val sonarrPort = config.getInt("sonarr.port")
   val sonarrKey = config.getString("sonarr.apikey")
