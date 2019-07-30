@@ -41,6 +41,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   }
 
   def profiles = get("profile").arr.map(json => Profile(json)).toSeq
+  def rootFolders = get("rootfolder").arr.map(json => RootFolder(json)).toSeq
   def version = get("system/status")("version").str
   def diskSpace = get("diskspace").arr.map(json => DiskSpace(json))
 }
@@ -100,4 +101,10 @@ case class Profile(json: ujson.Value) {
   val id = json("id").num.toInt
   val name = json("name").str
   override def toString = name
+}
+
+case class RootFolder(json: ujson.Value) {
+  val id = json("id").num.toInt
+  val path = json("path").str
+  override def toString = path
 }
