@@ -59,7 +59,7 @@ object scalarr {
     val results = sonarr.lookup(term)
     if(results.isEmpty) println("no results")
     else {
-      chooseFrom(results, "Add series: ", lookupFormat) match {
+      chooseFrom(results, "series", lookupFormat) match {
         case Some(series) =>
           println(s"Adding series: ${series.title}");
           add(series)
@@ -74,11 +74,11 @@ object scalarr {
 
   def series(query: String)(implicit reader: LineReader) = {
     val result = sonarr.seriesSearch(query)
-    chooseFrom(result, "Series: ") match {
+    chooseFrom(result, "series") match {
       case Some(series) =>
         println(series.toString)
-        chooseFrom(sonarr.getEpisodes(series.id), "Season: ", makeString, seasonN) match {
-          case Some(season) => chooseFrom(season.eps, "Episode: ", makeString, epN) match {
+        chooseFrom(sonarr.getEpisodes(series.id), "season", makeString, seasonN) match {
+          case Some(season) => chooseFrom(season.eps, "episode", makeString, epN) match {
             case Some(episode) => println(episode.toString)
             case _ => println("No matching episode")
           }
@@ -100,21 +100,27 @@ object scalarr {
 
   def chooseFrom[A] (options: Seq[A], prompt: String, f: A => String)
                     (implicit reader: LineReader): Option[A] = {
-      if(options.size == 1) Some(options.head)
-      else {
+      if(options.size == 1) {
+        val result = options.head
+        println(s"${prompt.capitalize}: $result")
+        Some(result)
+      } else {
         options.zipWithIndex.foreach({case (o, i) => println(s"($i) ${f(o)}")})
-        allCatch.opt(options(reader.readLine(prompt).toInt))
+        allCatch.opt(options(reader.readLine(s"Choose a $prompt: ").toInt))
       }
   }
 
   def chooseFrom[A] (options: Seq[A], prompt: String, 
                      fString: A => String, indexer: A => Int)
                     (implicit reader: LineReader): Option[A] = {
-      if(options.size == 1) Some(options.head)
-      else {
+      if(options.size == 1) {
+        val result = options.head
+        println(s"${prompt.capitalize}: $result")
+        Some(result)
+      } else {
         val map = SortedMap.empty[Int, A] ++ options.map(x => indexer(x) -> x)
         map.foreach{case (i, x) => println(s"($i) ${fString(x)}")}
-        allCatch.opt(map(reader.readLine(prompt).toInt))
+        allCatch.opt(map(reader.readLine(s"Choose a $prompt: ").toInt))
       }
   }
 }
