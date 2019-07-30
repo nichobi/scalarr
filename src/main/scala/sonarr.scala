@@ -40,6 +40,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
     allSeries.filter(_.title.toLowerCase.contains(query))
   }
 
+  def profiles = get("profile").arr.map(json => Profile(json)).toSeq
   def version = get("system/status")("version").str
   def diskSpace = get("diskspace").arr.map(json => DiskSpace(json))
 }
@@ -93,4 +94,10 @@ case class DiskSpace(json: ujson.Value) {
 
   override def toString = s"$path: $percentUsed% used"
   def percentUsed = ((1 - freeSpace / totalSpace) * 100 + 0.5).toInt
+}
+
+case class Profile(json: ujson.Value) {
+  val id = json("id").num.toInt
+  val name = json("name").str
+  override def toString = name
 }
