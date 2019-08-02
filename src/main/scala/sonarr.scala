@@ -20,6 +20,15 @@ case class Sonarr(address: String, port: Int, apiKey: String){
     response.unsafeBody
   }
 
+  def post(endpoint: String, body: ujson.Value): Try[ujson.Value] = {
+    val request = sttp.post(base.path(s"api/$endpoint"))
+      .body(body.render())
+      .header("X-Api-Key", apiKey)
+      .response(asJson)
+    val response = request.send()
+    response.unsafeBody
+  }
+
   def lookup(query: String, resultSize: Int = 5): Try[Seq[Series]] = {
     get("series/lookup", ("term", query)).map(
       _.arr.take(resultSize).toSeq.map(x => Series(x)))
