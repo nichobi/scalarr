@@ -59,7 +59,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   def diskSpace = get("diskspace").map(_.arr.map(json => DiskSpace(json)).toSeq)
 }
 
-class Series(json: ujson.Value) {
+abstract class Series(val json: ujson.Value) {
   val tvdbId = json("tvdbId").num.toInt
   val title = json("title").str
   val year = json("year").num.toInt
