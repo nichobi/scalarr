@@ -2,48 +2,52 @@ package scalarr
 import com.softwaremill.sttp._
 import ujson._
 import scala.util.control.Exception.allCatch
+import scala.util.{Try,Success,Failure}
 
 case class Sonarr(address: String, port: Int, apiKey: String){
 
   val base = Uri(address).port(port).path("/api")
   implicit val backend = HttpURLConnectionBackend()
+  val asJson: ResponseAs[Try[ujson.Value], Nothing] = asString.map(parseJson)
+  def parseJson(json: String): Try[ujson.Value] = Try(ujson.read(json))
 
-  def get(endpoint: String, params: (String, String)*): ujson.Value = {
-    val request = sttp.get(base.path(s"api/$endpoint").params(params.toMap))
+  def get( endpoint: String, params: (String, String)*): Try[ujson.Value] = {
+    val request = sttp.get(base.path(s"api/$endpoint")
+      .params(params.toMap))
       .header("X-Api-Key", apiKey)
+      .response(asJson)
     val response = request.send()
-    val parsed = ujson.read(response.unsafeBody)
-    parsed
+    response.unsafeBody
   }
 
-  def lookup(query: String, resultSize: Int = 5): Seq[Series] = {
-    get("series/lookup", ("term", query)).arr.take(resultSize).toSeq
-      .map(x => Series(x))
+  def lookup(query: String, resultSize: Int = 5): Try[Seq[Series]] = {
+    get("series/lookup", ("term", query)).map(
+      _.arr.take(resultSize).toSeq.map(x => Series(x)))
   }
 
-  def allSeries = get("series").arr.toSeq.map(x => AddedSeries(x))
+  def allSeries = get("series").map(_.arr.toSeq.map(json => AddedSeries(json)))
 
-  def series(id: Int) = AddedSeries(get(s"series/$id"))
+  def series(id: Int) = get(s"series/$id").map(json => AddedSeries(json))
 
-  def getEpisodes(id: Int): Seq[Season] = {
-    val episodes = get("episode", ("seriesId", id.toString)).arr.toSeq
-      .map(ep => Episode(ep))
+  def getEpisodes(id: Int): Try[Seq[Season]] = {
+    val episodes = get("episode", ("seriesId", id.toString)).map(
+      _.arr.toSeq.map(ep => Episode(ep)))
     
     def episodesToSeasons(eps: Seq[Episode]) = {
       eps.groupBy(_.seasonNumber).map(x => Season(x._1, x._2))
     }
 
-    episodesToSeasons(episodes).toSeq.sortBy(_.n)
+    episodes.map(eps => episodesToSeasons(eps).toSeq.sortBy(_.n))
   }
 
-  def seriesSearch(query: String, resultSize: Int = 5): Seq[AddedSeries] = {
-    allSeries.filter(_.title.toLowerCase.contains(query))
+  def seriesSearch(query: String, resultSize: Int = 5): Try[Seq[AddedSeries]] = {
+    allSeries.map(_.filter(_.title.toLowerCase.contains(query)))
   }
 
-  def profiles = get("profile").arr.map(json => Profile(json)).toSeq
-  def rootFolders = get("rootfolder").arr.map(json => RootFolder(json)).toSeq
-  def version = get("system/status")("version").str
-  def diskSpace = get("diskspace").arr.map(json => DiskSpace(json))
+  def profiles = get("profile").map(_.arr.map(json => Profile(json)).toSeq)
+  def rootFolders = get("rootfolder").map(_.arr.map(json => RootFolder(json)).toSeq)
+  def version = get("system/status").map(_("version").str)
+  def diskSpace = get("diskspace").map(_.arr.map(json => DiskSpace(json)).toSeq)
 }
 
 class Series(json: ujson.Value) {
@@ -72,7 +76,9 @@ object AddedSeries {
 }
 
 class LookupSeries(json: ujson.Value) extends Series(json) {
-  def add(path: String) = ???
+}
+object LookupSeries {
+  def apply(json: ujson.Value) = new LookupSeries(json)
 }
 
 case class Episode(json: ujson.Value) {
