@@ -17,7 +17,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
       .header("X-Api-Key", apiKey)
       .response(asJson)
     val response = request.send()
-    response.unsafeBody
+    Try(response.unsafeBody).flatten
   }
 
   def post(endpoint: String, body: ujson.Value): Try[ujson.Value] = {
@@ -26,7 +26,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
       .header("X-Api-Key", apiKey)
       .response(asJson)
     val response = request.send()
-    response.unsafeBody
+    Try(response.unsafeBody).flatten
   }
 
   def lookup(query: String, resultSize: Int = 5): Try[Seq[Series]] = {
@@ -34,7 +34,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
       _.arr.take(resultSize).toSeq.map(x => Series(x)))
   }
 
-  def allSeries = get("series").map(_.arr.toSeq.map(json => AddedSeries(json)))
+  def allSeries = get("series")map(_.arr.toSeq.map(json => AddedSeries(json)))
 
   def series(id: Int) = get(s"series/$id").map(json => AddedSeries(json))
 
