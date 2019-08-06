@@ -53,6 +53,16 @@ case class Sonarr(address: String, port: Int, apiKey: String){
     allSeries.map(_.filter(_.title.toLowerCase.contains(query)))
   }
 
+  def add(series: Series, rootPath: RootFolder, qualityProfile: Profile): Try[ujson.Value] = {
+    series match {
+      case series:LookupSeries => val params = series.json
+        params("rootFolderPath") = rootPath.path
+        params("qualityProfileId") = qualityProfile.id
+        post("series", params)
+      case _ => Failure(new Exception("Series already exists"))
+    }
+  }
+
   def profiles = get("profile").map(_.arr.map(json => Profile(json)).toSeq)
   def rootFolders = get("rootfolder").map(_.arr.map(json => RootFolder(json)).toSeq)
   def version = get("system/status").map(_("version").str)
