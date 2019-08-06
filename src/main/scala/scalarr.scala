@@ -55,16 +55,19 @@ object scalarr {
     }
   }
 
-  def lookup(term: String)(implicit reader: LineReader) = {
-    val results = sonarr.lookup(term)
-    if(results.isEmpty) println("no results")
-    else {
-      chooseFrom(results, "series", lookupFormat) match {
-        case Some(series) =>
-          println(s"Adding series: ${series.title}");
-          add(series)
-        case _ => println("Invalid selection")
-      }
+  def lookup(term: String)(implicit reader: LineReader): Unit = {
+    sonarr.lookup(term) match {
+      case Success(results) => if(results.isEmpty) println("no results")
+        else {
+          chooseFrom(results, "series", lookupFormat) match {
+            case Some(series) =>
+              println(s"Adding series: ${series.title}");
+              add(series)
+            case _ => println("Invalid selection")
+          }
+        }
+      case x => println("Search failed")
+        println(x)
     }
 
     def lookupFormat(s: Series): String = s"""${s.title} - ${s.year}
@@ -74,10 +77,10 @@ object scalarr {
 
   def series(query: String)(implicit reader: LineReader) = {
     val result = sonarr.seriesSearch(query)
-    chooseFrom(result, "series") match {
+    chooseFromTry(result, "series") match {
       case Some(series) =>
         println(series.toString)
-        chooseFrom(sonarr.getEpisodes(series.id), "season", makeString, seasonN) match {
+        chooseFromTry(sonarr.getEpisodes(series.id), "season", makeString, seasonN) match {
           case Some(season) => chooseFrom(season.eps, "episode", makeString, epN) match {
             case Some(episode) => println(episode.toString)
             case _ => println("No matching episode")
