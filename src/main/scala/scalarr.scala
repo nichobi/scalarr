@@ -92,20 +92,18 @@ object scalarr {
 
   def add(series: Series) = ???
 
-  def makeString[A](a: A) = a.toString
-  def chooseFrom[A] (options: Seq[A], prompt: String)
-                    (implicit reader: LineReader): Option[A] = {
-    chooseFrom(options, prompt, makeString)
   }
 
-  def chooseFrom[A] (options: Seq[A], prompt: String, f: A => String)
+  def makeString[A]: A => String = _.toString
+
+  def chooseFrom[A] (options: Seq[A], prompt: String, fString: A => String = makeString)
                     (implicit reader: LineReader): Option[A] = {
       if(options.size == 1) {
         val result = options.head
         println(s"${prompt.capitalize}: $result")
         Some(result)
       } else {
-        options.zipWithIndex.foreach({case (o, i) => println(s"($i) ${f(o)}")})
+        options.zipWithIndex.foreach({case (o, i) => println(s"($i) ${fString(o)}")})
         allCatch.opt(options(reader.readLine(s"Choose a $prompt: ").toInt))
       }
   }
