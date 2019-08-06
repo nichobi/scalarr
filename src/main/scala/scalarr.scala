@@ -117,7 +117,7 @@ object scalarr {
       }
   }
 
-  def chooseFrom[A] (options: Seq[A], prompt: String, 
+  def chooseFrom[A] (options: Seq[A], prompt: String,
                      fString: A => String, indexer: A => Int)
                     (implicit reader: LineReader): Option[A] = {
       if(options.size == 1) {
@@ -137,9 +137,9 @@ object scalarr {
     case x => println(s"Request failed:\n$x")
       None
   }
-                      
-  def chooseFromTry[A] (optionsTry: Try[Seq[A]], prompt: String, 
-                        fString: A => String, indexer: A => Int) 
+ 
+  def chooseFromTry[A] (optionsTry: Try[Seq[A]], prompt: String,
+                        fString: A => String, indexer: A => Int)
                        (implicit reader: LineReader): Option[A] = optionsTry match {
     case Success(options) => chooseFrom(options, prompt, fString, indexer)
     case x => println(s"Request failed:\n$x")
