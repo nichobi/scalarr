@@ -121,4 +121,19 @@ object scalarr {
         allCatch.opt(map(reader.readLine(s"Choose a $prompt: ").toInt))
       }
   }
+
+  def chooseFromTry[A] (optionsTry: Try[Seq[A]], prompt: String, fString: A => String = makeString)
+                    (implicit reader: LineReader): Option[A] = optionsTry match {
+    case Success(options) => chooseFrom(options, prompt, fString)
+    case x => println(s"Request failed:\n$x")
+      None
+  }
+                      
+  def chooseFromTry[A] (optionsTry: Try[Seq[A]], prompt: String, 
+                        fString: A => String, indexer: A => Int) 
+                       (implicit reader: LineReader): Option[A] = optionsTry match {
+    case Success(options) => chooseFrom(options, prompt, fString, indexer)
+    case x => println(s"Request failed:\n$x")
+      None
+  }
 }
