@@ -93,8 +93,14 @@ object scalarr {
     def epN(ep: Episode) = ep.episodeNumber
   }
 
-  def add(series: Series) = ???
-
+  def add(series: Series)(implicit reader: LineReader) = {
+    chooseFromTry(sonarr.rootFolders, "root folder") match {
+      case Some(rootPath) => chooseFromTry(sonarr.profiles, "quality profile") match {
+        case Some(qualityProfile) => sonarr.add(series, rootPath, qualityProfile)
+        case _ => println("No quality profile selected")
+      }
+        case _ => println("No series folder selected")
+    }
   }
 
   def makeString[A]: A => String = _.toString
