@@ -4,7 +4,7 @@ import scala.util.{Try,Success,Failure}
 
 case class Sonarr(address: String, port: Int, apiKey: String){
 
-  val base = Uri(address).port(port).path("/api")
+  val base = uri"$address:$port"
   implicit val backend = HttpURLConnectionBackend()
   val asJson: ResponseAs[Try[ujson.Value], Nothing] = asString.map(parseJson)
   def parseJson(json: String): Try[ujson.Value] = Try(ujson.read(json))
