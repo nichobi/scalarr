@@ -6,3 +6,5 @@ libraryDependencies ++= Seq(
   "org.jline" % "jline" % "3.11.0",
   "com.lihaoyi" %% "os-lib" % "0.3.0"
 )
+scalacOptions := Seq("-unchecked", "-deprecation", "Ywarn-dead-code", 
+                     "-Ywarn-unused", "-feature", "-Xlint")
