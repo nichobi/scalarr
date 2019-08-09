@@ -43,7 +43,7 @@ object scalarr {
     }
   }
 
-  def interactive = {
+  def interactive() = {
     var keepGoing = true
     val completionStrings = Seq("lookup", "exit", "series").sorted
     val completer = new StringsCompleter(completionStrings.asJava)
@@ -51,10 +51,10 @@ object scalarr {
       .completer(completer).build()
     while(keepGoing) {
        reader.readLine("Command: ").split(" ").toList match {
-        case "hello" :: tail => println("hi")
+        case "hello" :: _ => println("hi")
         case "lookup" :: tail => lookup(tail.mkString(" "))
         case "series" :: tail => series(tail.mkString(" "))
-        case "exit" :: tail => keepGoing = false; println("Exiting...")
+        case "exit" :: _ => keepGoing = false; println("Exiting...")
         case _ => println("Unkown command")
       }
     }

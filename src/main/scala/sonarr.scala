@@ -1,7 +1,5 @@
 package scalarr
 import com.softwaremill.sttp._
-import ujson._
-import scala.util.control.Exception.allCatch
 import scala.util.{Try,Success,Failure}
 
 case class Sonarr(address: String, port: Int, apiKey: String){
@@ -50,7 +48,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   }
 
   def seriesSearch(query: String, resultSize: Int = 5): Try[Seq[AddedSeries]] = {
-    allSeries.map(_.filter(_.title.toLowerCase.contains(query)))
+    allSeries.map(_.filter(_.title.toLowerCase.contains(query))).map(_.take(resultSize))
   }
 
   def add(series: Series, rootPath: RootFolder, qualityProfile: Profile): Try[ujson.Value] = {
