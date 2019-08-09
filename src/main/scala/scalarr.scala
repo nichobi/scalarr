@@ -34,8 +34,13 @@ object scalarr {
 
   def main(args: Array[String] = Array.empty[String]): Unit = {
     println(scalarrLogo)
-    println(s"Connected to Sonarr ${sonarr.version} at $sonarrAddress:$sonarrPort")
-    interactive
+    sonarr.version match {
+      case Success(version) => 
+        println(s"Connected to Sonarr $version at $sonarrAddress:$sonarrPort")
+        interactive
+      case Failure(error) => println(s"Failed to connect to Sonarr at $sonarrAddress:$sonarrPort")
+        println(error)
+    }
   }
 
   def interactive = {
