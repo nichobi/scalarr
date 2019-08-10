@@ -18,10 +18,8 @@ object scalarr {
 
 """.drop(1).dropRight(2)
   val configFolder = os.home/".config"/"scalarr"
+  if(!os.exists(configFolder)) os.makeDir.all(configFolder)
   val configFile = configFolder/"scalarr.conf"
-  if(!os.exists(configFolder)) {
-    os.makeDir.all(configFolder)
-  }
   if(!os.exists(configFile)) {
     val defaultConfig = os.read(os.resource/"scalarr.conf")
     os.write(configFile, defaultConfig)
