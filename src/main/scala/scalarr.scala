@@ -59,93 +59,73 @@ object scalarr {
   }
 
   def lookup(term: String)(implicit reader: LineReader): Unit = {
-    sonarr.lookup(term) match {
-      case Success(results) => if(results.isEmpty) println("no results")
-        else {
-          chooseFrom(results, "series", lookupFormat) match {
-            case Some(series) =>
-              println(s"Adding series: ${series.title}");
-              add(series)
-            case _ => println("Invalid selection")
-          }
-        }
-      case x => println("Search failed")
-        println(x)
-    }
+    for {
+      results <- sonarr.lookup(term)
+      series <- chooseFrom(results, "series", lookupFormat)
+    } add(series)
 
     def lookupFormat(s: Series): String = s"""${s.title} - ${s.year}
      |    ${s.status} - Seasons: ${s.seasonCount}""".stripMargin
 
   }
 
-  def series(query: String)(implicit reader: LineReader) = {
-    val result = sonarr.seriesSearch(query)
-    chooseFromTry(result, "series") match {
-      case Some(series) =>
-        println(series.toString)
-        chooseFromTry(sonarr.getEpisodes(series.id), "season", makeString, seasonN) match {
-          case Some(season) => chooseFrom(season.eps, "episode", makeString, epN) match {
-            case Some(episode) => println(episode.toString)
-            case _ => println("No matching episode")
-          }
-          case _ => println("No matching episode")
-        }
-      case _ => println("No matching series")
-    }
-    def seasonN(s: Season) = s.n
-    def epN(ep: Episode) = ep.episodeNumber
+  def series(query: String)(implicit reader: LineReader): Unit = {
+    for {
+      results <- sonarr.seriesSearch(query)
+      series <- chooseFrom(results, "series")
+      seasons <- sonarr.getEpisodes(series.id)
+      season <- chooseFrom(seasons, "season", makeString, seasonN)
+      episode <- chooseFrom(season.eps, "episode", makeString, epN)
+    } println(episode)
+    def seasonN(s: Season): Int = s.n
+    def epN(ep: Episode): Int = ep.episodeNumber
   }
 
-  def add(series: Series)(implicit reader: LineReader) = {
-    chooseFromTry(sonarr.rootFolders, "root folder") match {
-      case Some(rootPath) => chooseFromTry(sonarr.profiles, "quality profile") match {
-        case Some(qualityProfile) => sonarr.add(series, rootPath, qualityProfile)
-        case _ => println("No quality profile selected")
-      }
-        case _ => println("No series folder selected")
+  def add(series: Series)(implicit reader: LineReader): Unit = {
+    for {
+      rootFolders <- sonarr.rootFolders
+      rootFolder <- chooseFrom(rootFolders, "root folder")
+      qualityProfiles <- sonarr.profiles
+      qualityProfile <- chooseFrom(qualityProfiles, "quality profile")
+      result <- Try(sonarr.add(series, rootFolder, qualityProfile))
+    } result match {
+      case Success(_) => println(s"Added $series")
+      case Failure(err) => println(s"Error: ${err.getMessage}")
     }
   }
 
   def makeString[A]: A => String = _.toString
 
   def chooseFrom[A] (options: Seq[A], prompt: String, fString: A => String = makeString)
-                    (implicit reader: LineReader): Option[A] = {
-      if(options.size == 1) {
-        val result = options.head
-        println(s"${prompt.capitalize}: $result")
-        Some(result)
-      } else {
-        options.zipWithIndex.foreach({case (o, i) => println(s"($i) ${fString(o)}")})
-        allCatch.opt(options(reader.readLine(s"Choose a $prompt: ").toInt))
+                    (implicit reader: LineReader): Try[A] = {
+      val result = Try(options.size match {
+        case 0 => throw new java.util.NoSuchElementException("No options to pick from")
+        case 1 => options.head
+        case _ => options.zipWithIndex.foreach({case (o, i) => println(s"($i) ${fString(o)}")})
+          options(reader.readLine(s"Choose a $prompt: ").toInt)
+      })
+      result match {
+        case Success(option) => println(s"${prompt.capitalize}: $option")
+        case Failure(err) => println(s"Failed to pick $prompt: $err")
       }
+      result
   }
 
   def chooseFrom[A] (options: Seq[A], prompt: String,
                      fString: A => String, indexer: A => Int)
-                    (implicit reader: LineReader): Option[A] = {
-      if(options.size == 1) {
-        val result = options.head
-        println(s"${prompt.capitalize}: $result")
-        Some(result)
-      } else {
-        val map = SortedMap.empty[Int, A] ++ options.map(x => indexer(x) -> x)
-        map.foreach{case (i, x) => println(s"($i) ${fString(x)}")}
-        allCatch.opt(map(reader.readLine(s"Choose a $prompt: ").toInt))
+                    (implicit reader: LineReader): Try[A] = Try {
+      val result = options.size match {
+        case 0 => throw new java.util.NoSuchElementException("No options to pick from")
+        case 1 => options.head
+        case _ => val map = SortedMap.empty[Int, A] ++ options.map(x => indexer(x) -> x)
+          map.foreach{case (i, x) => println(s"($i) ${fString(x)}")}
+          map(reader.readLine(s"Choose a $prompt: ").toInt)
       }
+      result match {
+        case Success(option) => println(s"${prompt.capitalize}: $option")
+        case Failure(err) => println(s"Failed to pick option: $err")
+      }
+      result
   }
 
-  def chooseFromTry[A] (optionsTry: Try[Seq[A]], prompt: String, fString: A => String = makeString)
-                    (implicit reader: LineReader): Option[A] = optionsTry match {
-    case Success(options) => chooseFrom(options, prompt, fString)
-    case x => println(s"Request failed:\n$x")
-      None
-  }
- 
-  def chooseFromTry[A] (optionsTry: Try[Seq[A]], prompt: String,
-                        fString: A => String, indexer: A => Int)
-                       (implicit reader: LineReader): Option[A] = optionsTry match {
-    case Success(options) => chooseFrom(options, prompt, fString, indexer)
-    case x => println(s"Request failed:\n$x")
-      None
-  }
 }
