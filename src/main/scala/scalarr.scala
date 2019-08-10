@@ -5,7 +5,6 @@ import org.jline.reader.impl.completer.StringsCompleter
 import scala.util.{Try, Success, Failure}
 import scala.jdk.CollectionConverters._
 import org.jline.reader.LineReader
-import scala.util.control.Exception.allCatch
 import scala.collection.SortedMap
 
 object scalarr {
@@ -24,7 +23,7 @@ object scalarr {
     val defaultConfig = os.read(os.resource/"scalarr.conf")
     os.write(configFile, defaultConfig)
   }
-  val config = ConfigFactory.parseFile(configFile.toIO)
+  val config: Config = ConfigFactory.parseFile(configFile.toIO)
   val sonarrAddress = config.getString("sonarr.address")
   val sonarrPort = config.getInt("sonarr.port")
   val sonarrKey = config.getString("sonarr.apikey")
