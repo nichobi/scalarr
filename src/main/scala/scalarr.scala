@@ -112,14 +112,14 @@ object scalarr {
 
   def chooseFrom[A] (options: Seq[A], prompt: String,
                      fString: A => String, indexer: A => Int)
-                    (implicit reader: LineReader): Try[A] = Try {
-      val result = options.size match {
+                    (implicit reader: LineReader): Try[A] = {
+      val result = Try(options.size match {
         case 0 => throw new java.util.NoSuchElementException("No options to pick from")
         case 1 => options.head
         case _ => val map = SortedMap.empty[Int, A] ++ options.map(x => indexer(x) -> x)
           map.foreach{case (i, x) => println(s"($i) ${fString(x)}")}
           map(reader.readLine(s"Choose a $prompt: ").toInt)
-      }
+      })
       result match {
         case Success(option) => println(s"${prompt.capitalize}: $option")
         case Failure(err) => println(s"Failed to pick option: $err")
