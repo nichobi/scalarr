@@ -6,6 +6,7 @@ import scala.util.{Try, Success, Failure}
 import scala.jdk.CollectionConverters._
 import org.jline.reader.LineReader
 import scala.collection.SortedMap
+import util.mergeLines
 
 object scalarr {
   val scalarrLogo = """
@@ -63,21 +64,27 @@ object scalarr {
       series <- chooseFrom(results, "series", lookupFormat)
     } add(series)
 
-    def lookupFormat(s: Series): String = s"""${s.title} - ${s.year}
-     |    ${s.status} - Seasons: ${s.seasonCount}""".stripMargin
-
+    def lookupFormat(s: Series): String = {
+      mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
+      |${s.status} - Seasons: ${s.seasonCount}""".stripMargin)
+    }
   }
 
   def series(query: String)(implicit reader: LineReader): Unit = {
     for {
       results <- sonarr.seriesSearch(query)
-      series <- chooseFrom(results, "series")
+      series <- chooseFrom(results, "series", seriesFormat)
       seasons <- sonarr.getEpisodes(series.id)
       season <- chooseFrom(seasons, "season", makeString, seasonN)
       episode <- chooseFrom(season.eps, "episode", makeString, epN)
     } println(episode)
     def seasonN(s: Season): Int = s.n
     def epN(ep: Episode): Int = ep.episodeNumber
+
+    def seriesFormat(s: Series): String = {
+      mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
+      |${s.status} - Seasons: ${s.seasonCount}""".stripMargin)
+    }
   }
 
   def add(series: Series)(implicit reader: LineReader): Unit = {
@@ -100,7 +107,9 @@ object scalarr {
       val result = Try(options.size match {
         case 0 => throw new java.util.NoSuchElementException("No options to pick from")
         case 1 => options.head
-        case _ => options.zipWithIndex.foreach({case (o, i) => println(s"($i) ${fString(o)}")})
+        case _ => 
+          options.zipWithIndex.foreach({case (o, i) => 
+            println(mergeLines(s"($i)", fString(o)))})
           options(reader.readLine(s"Choose a $prompt: ").toInt)
       })
       result match {
@@ -117,7 +126,7 @@ object scalarr {
         case 0 => throw new java.util.NoSuchElementException("No options to pick from")
         case 1 => options.head
         case _ => val map = SortedMap.empty[Int, A] ++ options.map(x => indexer(x) -> x)
-          map.foreach{case (i, x) => println(s"($i) ${fString(x)}")}
+          map.foreach{case (i, x) => println(mergeLines(s"($i)", fString(x)))}
           map(reader.readLine(s"Choose a $prompt: ").toInt)
       })
       result match {
@@ -126,5 +135,5 @@ object scalarr {
       }
       result
   }
-
 }
+
