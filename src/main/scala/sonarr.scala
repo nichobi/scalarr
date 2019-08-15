@@ -77,7 +77,7 @@ abstract class Series(val json: ujson.Value) {
   override def toString = s"$title ($year) - tvdb:$tvdbId"
 }
 object Series {
-  def apply(json: ujson.Value) = {
+  def apply(json: ujson.Value): Series = {
     if(json.obj.contains("id")) new AddedSeries(json)
     else new LookupSeries(json)
   }
