@@ -1,3 +1,4 @@
+package tiv;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
@@ -116,9 +117,8 @@ public class TerminalImageViewer {
     return name.startsWith("http://") || name.startsWith("https://");
   }
 
-  static void convert(String name, int maxWidth, int maxHeight) throws IOException {
+  public static String convert(String name, int maxWidth, int maxHeight) throws IOException {
     BufferedImage original = loadImage(name);
-
     float originalWidth = original.getWidth();
     float originalHeight = original.getHeight();
     float scale = Math.min(maxWidth / originalWidth, maxHeight / originalHeight);
@@ -126,12 +126,12 @@ public class TerminalImageViewer {
     int width = (int) (originalWidth * scale);
 
     if (originalWidth == width && !grayscale) {
-      dump(original, mode);
+      return dump(original, mode);
     } else {
       BufferedImage image = new BufferedImage(width, height, grayscale ? BufferedImage.TYPE_BYTE_GRAY : BufferedImage.TYPE_INT_RGB);
       Graphics2D graphics = image.createGraphics();
       graphics.drawImage(original, 0, 0, width, height, null);
-      dump(image, mode);
+      return dump(image, mode);
     }
   }
 
@@ -143,7 +143,7 @@ public class TerminalImageViewer {
     return ImageIO.read(new File(name));
   }
 
-  static void dump(BufferedImage image, int mode) {
+  static String dump(BufferedImage image, int mode) {
     int w = image.getWidth();
     ImageData imageData = new ImageData(w, image.getHeight());
     byte[] data = imageData.data;
@@ -159,7 +159,7 @@ public class TerminalImageViewer {
         pos++;
       }
     }
-    System.out.print(imageData.dump(mode));
+    return imageData.dump(mode);
   }
 
 
