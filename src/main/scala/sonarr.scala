@@ -61,10 +61,26 @@ case class Sonarr(address: String, port: Int, apiKey: String){
     }
   }
 
+  def posterUrl(series: Series): Try[Uri] = series.posterPath match {
+    case Success(path) if (path.startsWith("/")) => Success(uri"$base".path(s"/api$path").params(("apikey", apiKey)))
+    case Success(url) => Success(uri"$url")
+    case Failure(x) => Failure(x)
+  }
+
+  def poster(series: Series): Try[String] = {
+    posterUrl(series).flatMap(url => util.imgConvert(url))
+  }
+  
+  def posterOrBlank(series: Series): String = {
+    val blankPoster: String = "      \n" * 4
+    poster(series).getOrElse(blankPoster)
+  }
+
   def profiles = get("profile").map(_.arr.map(json => Profile(json)).toSeq)
   def rootFolders = get("rootfolder").map(_.arr.map(json => RootFolder(json)).toSeq)
   def version = get("system/status").map(_("version").str)
   def diskSpace = get("diskspace").map(_.arr.map(json => DiskSpace(json)).toSeq)
+
 }
 
 abstract class Series(val json: ujson.Value) {
@@ -73,8 +89,12 @@ abstract class Series(val json: ujson.Value) {
   val year = json("year").num.toInt
   val status = json("status").str
   val seasonCount = json("seasonCount").num.toInt
+  val posterPath: Try[String] = Try{
+    json("images").arr.map(_.obj).filter(_("coverType").str == "poster").head("url").str.takeWhile(_ != '?')
+  }
 
   override def toString = s"$title ($year) - tvdb:$tvdbId"
+
 }
 object Series {
   def apply(json: ujson.Value): Series = {
