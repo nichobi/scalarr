@@ -42,14 +42,14 @@ object scalarr {
 
   def interactive() = {
     var keepGoing = true
-    val completionStrings = Seq("lookup", "exit", "series").sorted
+    val completionStrings = Seq("add", "exit", "series").sorted
     val completer = new StringsCompleter(completionStrings.asJava)
     implicit val reader = jline.reader.LineReaderBuilder.builder
       .completer(completer).build()
     while(keepGoing) {
        reader.readLine("Command: ").split(" ").toList match {
         case "hello" :: _ => println("hi")
-        case "lookup" :: tail => lookup(tail.mkString(" "))
+        case "add" :: tail => lookup(tail.mkString(" "))
         case "series" :: tail => series(tail.mkString(" "))
         case "exit" :: _ => keepGoing = false; println("Exiting...")
         case _ => println("Unkown command")
