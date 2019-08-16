@@ -104,29 +104,23 @@ object scalarr {
 
   def chooseFrom[A] (options: Seq[A], prompt: String, fString: A => String = makeString)
                     (implicit reader: LineReader): Try[A] = {
-      val result = Try(options.size match {
-        case 0 => throw new java.util.NoSuchElementException("No options to pick from")
-        case 1 => options.head
-        case _ => 
-          options.zipWithIndex.foreach({case (o, i) => 
-            println(mergeLines(s"($i)", fString(o)))})
-          options(reader.readLine(s"Choose a $prompt: ").toInt)
-      })
-      result match {
-        case Success(option) => println(s"${prompt.capitalize}: $option")
-        case Failure(err) => println(s"Failed to pick $prompt: $err")
-      }
-      result
+    val map = SortedMap((1 to options.size).zip(options):_*)
+    chooseFromHelper(map, prompt, fString)
   }
 
   def chooseFrom[A] (options: Seq[A], prompt: String,
                      fString: A => String, indexer: A => Int)
                     (implicit reader: LineReader): Try[A] = {
-      val result = Try(options.size match {
+    val map = SortedMap(options.map(o => indexer(o) -> o):_*)
+    chooseFromHelper(map, prompt, fString)
+  }
+
+  private def chooseFromHelper[A] (map: SortedMap[Int, A], prompt: String, fString: A => String)
+                          (implicit reader: LineReader): Try[A] = {
+      val result = Try(map.size match {
         case 0 => throw new java.util.NoSuchElementException("No options to pick from")
-        case 1 => options.head
-        case _ => val map = SortedMap.empty[Int, A] ++ options.map(x => indexer(x) -> x)
-          map.foreach{case (i, x) => println(mergeLines(s"($i)", fString(x)))}
+        case 1 => map.head._2
+        case _ => map.foreach{case (i, x) => println(mergeLines(s"($i)", fString(x)))}
           map(reader.readLine(s"Choose a $prompt: ").toInt)
       })
       result match {
