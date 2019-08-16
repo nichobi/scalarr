@@ -1,4 +1,9 @@
+name := "scalarr"
+
+version := "0.1.0"
+
 scalaVersion := "2.13.0"
+
 libraryDependencies ++= Seq(
   "com.lihaoyi" %% "ujson" % "0.7.5",
   "com.softwaremill.sttp" %% "core" % "1.6.0",
@@ -7,5 +12,6 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %% "os-lib" % "0.3.0",
   "org.fusesource.jansi" % "jansi" % "1.18"
 )
+
 scalacOptions := Seq("-unchecked", "-deprecation", "Ywarn-dead-code", 
                      "-Ywarn-unused", "-feature", "-Xlint")
