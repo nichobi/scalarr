@@ -62,8 +62,20 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   }
 
   def posterUrl(series: Series): Try[Uri] = series.posterPath match {
-    case Success(path) if (path.startsWith("/")) => Success(uri"$base".path(s"/api$path").params(("apikey", apiKey)))
-    case Success(url) => Success(uri"$url")
+    case Success(path) if (path.startsWith("/")) => 
+      Try {
+        val patchedPath = if(path.contains("/poster.")) {
+          path.patch(path.indexOf("/poster.") + 7, "-250", 0)
+        } else path
+        uri"$base".path(s"/api$patchedPath").params(("apikey", apiKey))
+      }
+    case Success(tvdbUrl) => 
+      Try {
+        val patchedUrl = if(tvdbUrl.contains("/posters/")) {
+          tvdbUrl.patch(tvdbUrl.indexOf("/posters/"), "/_cache", 0)
+        } else tvdbUrl 
+        uri"$patchedUrl"
+      }
     case Failure(x) => Failure(x)
   }
 
