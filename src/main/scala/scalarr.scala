@@ -61,7 +61,7 @@ object scalarr {
 
     def lookupFormat(s: Series): String = {
       mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
-      |${s.status} - Seasons: ${s.seasonCount}""".stripMargin)
+      |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
     }
   }
 
@@ -78,7 +78,7 @@ object scalarr {
 
     def seriesFormat(s: Series): String = {
       mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
-      |${s.status} - Seasons: ${s.seasonCount}""".stripMargin)
+      |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
     }
   }
 
