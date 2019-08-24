@@ -1,12 +1,9 @@
 package scalarr
 import com.typesafe.config.{Config,ConfigFactory}
-import org.jline
-import org.jline.reader.impl.completer.StringsCompleter
 import scala.util.{Try, Success, Failure}
-import scala.jdk.CollectionConverters._
-import org.jline.reader.LineReader
 import scala.collection.SortedMap
-import util.mergeLines
+import util.{mergeLines, Reader}
+import util.interactive._
 
 object scalarr {
   val scalarrLogo = """
@@ -28,7 +25,7 @@ object scalarr {
   val sonarrAddress = config.getString("sonarr.address")
   val sonarrPort = config.getInt("sonarr.port")
   val sonarrKey = config.getString("sonarr.apikey")
-  val sonarr = Sonarr(sonarrAddress, sonarrPort, sonarrKey)
+  implicit val sonarr = Sonarr(sonarrAddress, sonarrPort, sonarrKey)
 
   def main(args: Array[String] = Array.empty[String]): Unit = {
     println(scalarrLogo)
@@ -43,12 +40,9 @@ object scalarr {
 
   def interactive() = {
     var keepGoing = true
-    val completionStrings = Seq("add", "exit", "series").sorted
-    val completer = new StringsCompleter(completionStrings.asJava)
-    implicit val reader = jline.reader.LineReaderBuilder.builder
-      .completer(completer).build()
+    implicit val reader = Reader()
     while(keepGoing) {
-       reader.readLine("Command: ").split(" ").toList match {
+      reader.commandReader.readLine("Command: ").split(" ").toList match {
         case "hello" :: _ => println("hi")
         case "add" :: tail => lookup(tail.mkString(" "))
         case "series" :: tail => series(tail.mkString(" "))
@@ -58,7 +52,7 @@ object scalarr {
     }
   }
 
-  def lookup(term: String)(implicit reader: LineReader): Unit = {
+  def lookup(term: String)(implicit reader: Reader): Unit = {
     for {
       results <- sonarr.lookup(term)
       series <- chooseFrom(results, "series", lookupFormat)
@@ -70,7 +64,7 @@ object scalarr {
     }
   }
 
-  def series(query: String)(implicit reader: LineReader): Unit = {
+  def series(query: String)(implicit reader: Reader): Unit = {
     for {
       results <- sonarr.seriesSearch(query)
       series <- chooseFrom(results, "series", seriesFormat)
@@ -87,7 +81,7 @@ object scalarr {
     }
   }
 
-  def add(series: Series)(implicit reader: LineReader): Unit = {
+  def add(series: Series)(implicit reader: Reader): Unit = {
     for {
       rootFolders <- sonarr.rootFolders
       rootFolder <- chooseFrom(rootFolders, "root folder")
@@ -100,34 +94,6 @@ object scalarr {
     }
   }
 
-  def makeString[A]: A => String = _.toString
-
-  def chooseFrom[A] (options: Seq[A], prompt: String, fString: A => String = makeString)
-                    (implicit reader: LineReader): Try[A] = {
-    val map = SortedMap((1 to options.size).zip(options):_*)
-    chooseFromHelper(map, prompt, fString)
-  }
-
-  def chooseFrom[A] (options: Seq[A], prompt: String,
-                     fString: A => String, indexer: A => Int)
-                    (implicit reader: LineReader): Try[A] = {
-    val map = SortedMap(options.map(o => indexer(o) -> o):_*)
-    chooseFromHelper(map, prompt, fString)
-  }
-
-  private def chooseFromHelper[A] (map: SortedMap[Int, A], prompt: String, fString: A => String)
-                          (implicit reader: LineReader): Try[A] = {
-      val result = Try(map.size match {
-        case 0 => throw new java.util.NoSuchElementException("No options to pick from")
-        case 1 => map.head._2
-        case _ => map.foreach{case (i, x) => println(mergeLines(s"($i)", fString(x)))}
-          map(reader.readLine(s"Choose a $prompt: ").toInt)
-      })
-      result match {
-        case Success(option) => println(s"${prompt.capitalize}: $option")
-        case Failure(err) => println(s"Failed to pick option: $err")
-      }
-      result
   }
 }
 
