@@ -36,8 +36,8 @@ case class Sonarr(address: String, port: Int, apiKey: String){
 
   def series(id: Int) = get(s"series/$id").map(json => AddedSeries(json))
 
-  def getEpisodes(id: Int): Try[Seq[Season]] = {
-    val episodes = get("episode", ("seriesId", id.toString)).map(
+  def seasons(series: AddedSeries): Try[Seq[Season]] = {
+    val episodes = get("episode", ("seriesId", series.id.toString)).map(
       _.arr.toSeq.map(ep => Episode(ep)))
     
     def episodesToSeasons(eps: Seq[Episode]) = {
