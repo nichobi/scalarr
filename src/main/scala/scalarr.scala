@@ -94,6 +94,12 @@ object scalarr {
     }
   }
 
+  def importFiles(implicit reader: Reader): Unit = {
+    def copyString(copy: Boolean) = if(copy) "Copy" else "Move"
+    for {
+      path <- reader.readPath
+      copy <- chooseFrom(Seq(true, false), "import mode", copyString)
+    } sonarr.importPath(path, copy)
   }
 }
 

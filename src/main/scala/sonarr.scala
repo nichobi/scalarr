@@ -88,6 +88,15 @@ case class Sonarr(address: String, port: Int, apiKey: String){
     poster(series).getOrElse(blankPoster)
   }
 
+  def importPath(path: os.Path, copy: Boolean): Try[ujson.Value] = {
+    val importMode = if(copy) "Copy" else "Move"
+    val body = ujson.Obj(
+      "name" -> "DownloadedEpisodesScan",
+      "importMode" -> importMode,
+      "path" -> path.toString)
+    post("command", body)
+  }
+
   def profiles = get("profile").map(_.arr.map(json => Profile(json)).toSeq)
   def rootFolders = get("rootfolder").map(_.arr.map(json => RootFolder(json)).toSeq)
   def version = get("system/status").map(_("version").str)
