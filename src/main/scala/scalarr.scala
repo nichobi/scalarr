@@ -43,11 +43,12 @@ object scalarr {
     implicit val reader = Reader()
     while(keepGoing) {
       reader.commandReader.readLine("Command: ").split(" ").toList match {
-        case "hello" :: _ => println("hi")
-        case "add" :: tail => lookup(tail.mkString(" "))
+        case "hello"  :: _    => println("hi")
+        case "add"    :: tail => lookup(tail.mkString(" "))
         case "series" :: tail => series(tail.mkString(" "))
-        case "exit" :: _ => keepGoing = false; println("Exiting...")
-        case _ => println("Unkown command")
+        case "import" :: _    => importFiles
+        case "exit"   :: _    => keepGoing = false; println("Exiting...")
+        case default          => println(s"Unkown command: $default")
       }
     }
   }
@@ -55,7 +56,7 @@ object scalarr {
   def lookup(term: String)(implicit reader: Reader): Unit = {
     for {
       results <- sonarr.lookup(term)
-      series <- chooseFrom(results, "series", lookupFormat)
+      series  <- chooseFrom(results, "series", lookupFormat)
     } add(series)
 
     def lookupFormat(s: Series): String = {
@@ -67,9 +68,9 @@ object scalarr {
   def series(query: String)(implicit reader: Reader): Unit = {
     for {
       results <- sonarr.seriesSearch(query)
-      series <- chooseFrom(results, "series", seriesFormat)
-      seasons <- sonarr.getEpisodes(series.id)
-      season <- chooseFrom(seasons, "season", makeString, seasonN)
+      series  <- chooseFrom(results, "series", seriesFormat)
+      seasons <- sonarr.seasons(series)
+      season  <- chooseFrom(seasons, "season", makeString, seasonN)
       episode <- chooseFrom(season.eps, "episode", makeString, epN)
     } println(episode)
     def seasonN(s: Season): Int = s.n
@@ -83,12 +84,11 @@ object scalarr {
 
   def add(series: Series)(implicit reader: Reader): Unit = {
     for {
-      rootFolders <- sonarr.rootFolders
-      rootFolder <- chooseFrom(rootFolders, "root folder")
+      rootFolders     <- sonarr.rootFolders
+      rootFolder      <- chooseFrom(rootFolders, "root folder")
       qualityProfiles <- sonarr.profiles
-      qualityProfile <- chooseFrom(qualityProfiles, "quality profile")
-      result <- Try(sonarr.add(series, rootFolder, qualityProfile))
-    } result match {
+      qualityProfile  <- chooseFrom(qualityProfiles, "quality profile")
+    } sonarr.add(series, rootFolder, qualityProfile) match {
       case Success(_) => println(s"Added $series")
       case Failure(err) => println(s"Error: ${err.getMessage}")
     }

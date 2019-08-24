@@ -102,12 +102,13 @@ abstract class Series(val json: ujson.Value) {
   val status = json("status").str
   val seasonCount = json("seasonCount").num.toInt
   val posterPath: Try[String] = Try{
-    json("images").arr.map(_.obj).filter(_("coverType").str == "poster").head("url").str.takeWhile(_ != '?')
+    json("images").arr.map(_.obj).filter(_("coverType").str == "poster")
+      .head("url").str.takeWhile(_ != '?')
   }
 
   override def toString = s"$title ($year) - tvdb:$tvdbId"
-
 }
+
 object Series {
   def apply(json: ujson.Value): Series = {
     if(json.obj.contains("id")) new AddedSeries(json)
@@ -163,3 +164,4 @@ case class RootFolder(json: ujson.Value) {
   val path = json("path").str
   override def toString = path
 }
+
