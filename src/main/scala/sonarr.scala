@@ -97,6 +97,11 @@ case class Sonarr(address: String, port: Int, apiKey: String){
     post("command", body)
   }
 
+  def remove(series: Series) = ???
+
+  def searchSeason(season: Season) = ???
+  def searchEpisode(episode: Episode) = ???
+
   def profiles = get("profile").map(_.arr.map(json => Profile(json)).toSeq)
   def rootFolders = get("rootfolder").map(_.arr.map(json => RootFolder(json)).toSeq)
   def version = get("system/status").map(_("version").str)
