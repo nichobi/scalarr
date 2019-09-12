@@ -49,7 +49,8 @@ object scalarr {
         case "series" :: tail => series(tail.mkString(" "))
         case "import" :: _    => importFiles
         case "exit"   :: _    => keepGoing = false; println("Exiting...")
-        case default          => println(s"Unkown command: $default")
+        case default  :: _    => println(s"Unkown command: $default")
+        case _ =>
       }
     }
   }
