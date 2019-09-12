@@ -1,5 +1,5 @@
 package scalarr
-import tiv.TerminalImageViewer.convert
+import tiv.TerminalImageViewer
 import com.softwaremill.sttp._
 import scala.util.{Try, Success, Failure}
 import scala.collection.SortedMap
@@ -21,7 +21,9 @@ object util {
     lines.mkString("\n")
   }
 
-  def imgConvert(url: Uri): Try[String] = Try(convert(url.toString, 27, 50))
+  //The height and width values were arrived at by trial and error. 
+  //The relation between these numbers and the image size measured in characters is unclear.
+  def imgConvert(url: Uri): Try[String] = Try(TerminalImageViewer.convert(url.toString, 27, 50))
 
   case class TextColumn(rawLines: Seq[String]) {
     val wrappedLines = rawLines.map(l => WrappedString(l))
