@@ -1,6 +1,7 @@
 package scalarr
 import com.softwaremill.sttp._
 import scala.util.{Try,Success,Failure}
+import cats.Show
 
 case class Sonarr(address: String, port: Int, apiKey: String){
 
@@ -128,6 +129,8 @@ object Series {
     if(json.obj.contains("id")) new AddedSeries(json)
     else new LookupSeries(json)
   }
+  
+  implicit val showSeries: Show[Series] = Show.show(s => s"${s.title} (${s.year}) - tvdb:${s.tvdbId}")
 }
 
 class AddedSeries(json: ujson.Value) extends Series(json) {
@@ -137,6 +140,7 @@ class AddedSeries(json: ujson.Value) extends Series(json) {
 }
 object AddedSeries {
   def apply(json: ujson.Value) = new AddedSeries(json)
+  implicit val showAddedSeries: Show[AddedSeries] = Show.show(s => s"${s.title} (${s.year}) - id:${s.id}")
 }
 
 class LookupSeries(json: ujson.Value) extends Series(json) {
@@ -153,9 +157,15 @@ case class Episode(json: ujson.Value) {
   override def toString =
     s"""S${f"$seasonNumber%02d"}E${f"$episodeNumber%02d"} - $title"""
 }
+object Episode{
+  implicit val showEpiosde: Show[Episode] = Show.fromToString
+}
 
 case class Season(n: Int, eps: Seq[Episode]){
   override def toString = if(n == 0) "Specials" else s"Season $n"
+}
+object Season{
+  implicit val showSeason: Show[Season] = Show.fromToString
 }
 
 case class DiskSpace(json: ujson.Value) {
@@ -166,16 +176,25 @@ case class DiskSpace(json: ujson.Value) {
   override def toString = s"$path: $percentUsed% used"
   def percentUsed = ((1 - freeSpace / totalSpace) * 100 + 0.5).toInt
 }
+object DiskSpace {
+  implicit val showDiskSpace: Show[DiskSpace] = Show.show(ds => s"${ds.path}: ${ds.percentUsed}% used")
+}
 
 case class Profile(json: ujson.Value) {
   val id = json("id").num.toInt
   val name = json("name").str
   override def toString = name
 }
+object Profile {
+  implicit val showProfile: Show[Profile] = Show.show(_.name)
+}
 
 case class RootFolder(json: ujson.Value) {
   val id = json("id").num.toInt
   val path = json("path").str
   override def toString = path
+}
+object RootFolder {
+  implicit val showRootFolder: Show[RootFolder] = Show.show(_.path)
 }
 

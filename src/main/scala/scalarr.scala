@@ -3,6 +3,8 @@ import com.typesafe.config.{Config,ConfigFactory}
 import scala.util.{Success, Failure}
 import util.{mergeLines, Reader}
 import util.interactive._
+import cats.Show
+import cats.implicits._
 
 object scalarr {
   val scalarrLogo = """
@@ -53,29 +55,29 @@ object scalarr {
   }
 
   def lookup(term: String)(implicit reader: Reader): Unit = {
-    for {
-      results <- sonarr.lookup(term)
-      series  <- chooseFrom(results, "series", lookupFormat)
-    } add(series)
-
-    def lookupFormat(s: Series): String = {
+    implicit val showSeries: Show[Series] = Show.show{s => 
       mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
       |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
     }
+
+    for {
+      results <- sonarr.lookup(term)
+      series  <- chooseFrom(results, "series")(reader, showSeries)
+    } add(series)
   }
 
   def series(query: String)(implicit reader: Reader): Unit = {
     for {
       results <- sonarr.seriesSearch(query)
-      series  <- chooseFrom(results, "series", seriesFormat)
+      series  <- chooseFrom(results, "series")
       seasons <- sonarr.seasons(series)
-      season  <- chooseFrom(seasons, "season", makeString, seasonN)
-      episode <- chooseFrom(season.eps, "episode", makeString, epN)
+      season  <- chooseFrom(seasons, "season", seasonN)
+      episode <- chooseFrom(season.eps, "episode", epN)
     } println(episode)
     def seasonN(s: Season): Int = s.n
     def epN(ep: Episode): Int = ep.episodeNumber
 
-    def seriesFormat(s: Series): String = {
+    implicit val showSeries: Show[Series] = Show.show{s =>
       mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
       |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
     }
@@ -94,10 +96,10 @@ object scalarr {
   }
 
   def importFiles(implicit reader: Reader): Unit = {
-    def copyString(copy: Boolean) = if(copy) "Copy" else "Move"
+    val showCopyBoolean: Show[Boolean] = Show.show(if(_) "Copy" else "Move")
     for {
       path <- reader.readPath
-      copy <- chooseFrom(Seq(true, false), "import mode", copyString)
+      copy <- chooseFrom(Seq(true, false), "import mode")(reader, showCopyBoolean)
     } sonarr.importPath(path, copy)
   }
 }

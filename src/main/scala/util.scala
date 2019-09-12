@@ -8,6 +8,8 @@ import scala.jdk.CollectionConverters._
 import org.jline.reader.LineReaderBuilder
 import org.jline.reader.impl.completer.StringsCompleter
 import org.jline.builtins.Completers.DirectoriesCompleter
+import cats.Show
+import cats.implicits._
 
 object util {
   def mergeLines(strings: String*): String = {
@@ -53,25 +55,24 @@ object util {
   object interactive {
     def makeString[A]: A => String = _.toString
   
-    def chooseFrom[A] (options: Seq[A], prompt: String, fString: A => String = makeString)
-                      (implicit reader: Reader): Try[A] = {
+    def chooseFrom[A] (options: Seq[A], prompt: String)
+                      (implicit reader: Reader, showA: Show[A]): Try[A] = {
       val map = SortedMap((1 to options.size).zip(options):_*)
-      chooseFromHelper(map, prompt, fString)
+      chooseFromHelper(map, prompt)
     }
   
-    def chooseFrom[A] (options: Seq[A], prompt: String,
-                       fString: A => String, indexer: A => Int)
-                      (implicit reader: Reader): Try[A] = {
+    def chooseFrom[A] (options: Seq[A], prompt: String, indexer: A => Int)
+                    (implicit reader: Reader, showA: Show[A]): Try[A] = {
       val map = SortedMap(options.map(o => indexer(o) -> o):_*)
-      chooseFromHelper(map, prompt, fString)
+      chooseFromHelper(map, prompt)
     }
   
-    private def chooseFromHelper[A] (map: SortedMap[Int, A], prompt: String, fString: A => String)
-                                    (implicit reader: Reader): Try[A] = {
+    private def chooseFromHelper[A] (map: SortedMap[Int, A], prompt: String)
+                                    (implicit reader: Reader, showA: Show[A]): Try[A] = {
         val result = Try(map.size match {
           case 0 => throw new java.util.NoSuchElementException("No options to pick from")
           case 1 => map.head._2
-          case _ => map.foreach{case (i, x) => println(mergeLines(s"($i)", fString(x)))}
+          case _ => map.foreach{case (i, x) => println(mergeLines(show"($i)", x.show))}
             map(reader.optionReader.readLine(s"Choose $prompt: ").toInt)
         })
         result match {
