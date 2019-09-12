@@ -21,7 +21,7 @@ object util {
     lines.mkString("\n")
   }
 
-  //The height and width values were arrived at by trial and error. 
+  //The height and width values were arrived at by trial and error.
   //The relation between these numbers and the image size measured in characters is unclear.
   def imgConvert(url: Uri): Try[String] = Try(TerminalImageViewer.convert(url.toString, 27, 50))
 
@@ -47,7 +47,7 @@ object util {
     lazy val commandReader = LineReaderBuilder.builder
       .completer(new StringsCompleter(commandStrings.asJava)).build()
     def readCommand = commandReader.readLine
-  
+
     lazy val pathReader = LineReaderBuilder.builder
       .completer(new DirectoriesCompleter(os.pwd.toIO)).build
     def readPath = Try(os.Path(pathReader.readLine, os.pwd))
@@ -56,19 +56,19 @@ object util {
 
   object interactive {
     def makeString[A]: A => String = _.toString
-  
+
     def chooseFrom[A] (options: Seq[A], prompt: String)
                       (implicit reader: Reader, showA: Show[A]): Try[A] = {
       val map = SortedMap((1 to options.size).zip(options):_*)
       chooseFromHelper(map, prompt)
     }
-  
+
     def chooseFrom[A] (options: Seq[A], prompt: String, indexer: A => Int)
                     (implicit reader: Reader, showA: Show[A]): Try[A] = {
       val map = SortedMap(options.map(o => indexer(o) -> o):_*)
       chooseFromHelper(map, prompt)
     }
-  
+
     private def chooseFromHelper[A] (map: SortedMap[Int, A], prompt: String)
                                     (implicit reader: Reader, showA: Show[A]): Try[A] = {
         val result = Try(map.size match {

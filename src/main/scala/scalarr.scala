@@ -31,7 +31,7 @@ object scalarr {
   def main(args: Array[String] = Array.empty[String]): Unit = {
     println(scalarrLogo)
     sonarr.version match {
-      case Success(version) => 
+      case Success(version) =>
         println(s"Connected to Sonarr $version at $sonarrAddress:$sonarrPort")
         interactive
       case Failure(error) => println(s"Failed to connect to Sonarr at $sonarrAddress:$sonarrPort")
@@ -56,7 +56,7 @@ object scalarr {
   }
 
   def lookup(term: String)(implicit reader: Reader): Unit = {
-    implicit val showSeries: Show[Series] = Show.show{s => 
+    implicit val showSeries: Show[Series] = Show.show{s =>
       mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
       |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
     }

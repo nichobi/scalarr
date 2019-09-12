@@ -40,7 +40,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   def seasons(series: AddedSeries): Try[Seq[Season]] = {
     val episodes = get("episode", ("seriesId", series.id.toString)).map(
       _.arr.toSeq.map(ep => Episode(ep)))
-    
+
     def episodesToSeasons(eps: Seq[Episode]) = {
       eps.groupBy(_.seasonNumber).map(x => Season(x._1, x._2))
     }
@@ -63,18 +63,18 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   }
 
   def posterUrl(series: Series): Try[Uri] = series.posterPath match {
-    case Success(path) if (path.startsWith("/")) => 
+    case Success(path) if (path.startsWith("/")) =>
       Try {
         val patchedPath = if(path.contains("/poster.")) {
           path.patch(path.indexOf("/poster.") + 7, "-250", 0)
         } else path
         uri"$base".path(s"/api$patchedPath").params(("apikey", apiKey))
       }
-    case Success(tvdbUrl) => 
+    case Success(tvdbUrl) =>
       Try {
         val patchedUrl = if(tvdbUrl.contains("/posters/")) {
           tvdbUrl.patch(tvdbUrl.indexOf("/posters/"), "/_cache", 0)
-        } else tvdbUrl 
+        } else tvdbUrl
         uri"$patchedUrl"
       }
     case Failure(x) => Failure(x)
@@ -83,7 +83,7 @@ case class Sonarr(address: String, port: Int, apiKey: String){
   def poster(series: Series): Try[String] = {
     posterUrl(series).flatMap(url => util.imgConvert(url))
   }
-  
+
   def posterOrBlank(series: Series): String = {
     val blankPoster: String = "      \n" * 4
     poster(series).getOrElse(blankPoster)
@@ -123,13 +123,12 @@ abstract class Series(val json: ujson.Value) {
 
   override def toString = s"$title ($year) - tvdb:$tvdbId"
 }
-
 object Series {
   def apply(json: ujson.Value): Series = {
     if(json.obj.contains("id")) new AddedSeries(json)
     else new LookupSeries(json)
   }
-  
+
   implicit val showSeries: Show[Series] = Show.show(s => s"${s.title} (${s.year}) - tvdb:${s.tvdbId}")
 }
 
