@@ -68,6 +68,11 @@ object scalarr {
   }
 
   def series(query: String)(implicit reader: Reader): Unit = {
+    implicit val showSeries: Show[AddedSeries] = Show.show{s =>
+      mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
+      |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
+    }
+
     for {
       results <- sonarr.seriesSearch(query)
       series  <- chooseFrom(results, "series")
@@ -77,11 +82,6 @@ object scalarr {
     } println(episode)
     def seasonN(s: Season): Int = s.n
     def epN(ep: Episode): Int = ep.episodeNumber
-
-    implicit val showSeries: Show[Series] = Show.show{s =>
-      mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
-      |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
-    }
   }
 
   def add(series: Series)(implicit reader: Reader): Unit = {
