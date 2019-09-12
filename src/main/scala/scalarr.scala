@@ -1,7 +1,6 @@
 package scalarr
 import com.typesafe.config.{Config,ConfigFactory}
-import scala.util.{Try, Success, Failure}
-import scala.collection.SortedMap
+import scala.util.{Success, Failure}
 import util.{mergeLines, Reader}
 import util.interactive._
 
