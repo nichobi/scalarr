@@ -1,6 +1,6 @@
 package scalarr
 import com.typesafe.config.{Config,ConfigFactory}
-import scala.util.{Success, Failure}
+import scala.util.{Try, Success, Failure}
 import util.{mergeLines, Reader}
 import util.interactive._
 import cats.Show
@@ -15,7 +15,7 @@ object scalarr {
 '____/ \.__, \___/\,| \___/\,|     |
 
 """.drop(1).dropRight(2)
-  val configFolder = os.home/".config"/"scalarr"
+  val configFolder = Try{os.Path(sys.env("XDG_CONFIG_HOME"))}.getOrElse(os.home/".config")/"scalarr"
   if(!os.exists(configFolder)) os.makeDir.all(configFolder)
   val configFile = configFolder/"scalarr.conf"
   if(!os.exists(configFile)) {
