@@ -2,6 +2,7 @@ package scalarr
 import com.softwaremill.sttp._
 import scala.util.{Try, Success, Failure}
 import cats.Show
+import zio._
 
 case class Sonarr(address: String, port: Int, apiKey: String) {
 
@@ -10,40 +11,45 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
   val asJson: ResponseAs[Try[ujson.Value], Nothing] = asString.map(parseJson)
   def parseJson(json: String): Try[ujson.Value] = Try(ujson.read(json))
 
-  def get(endpoint: String, params: (String, String)*): Try[ujson.Value] = {
-    val request = sttp
-      .get(
-        base
-          .path(s"api/$endpoint")
-          .params(params.toMap)
-      )
-      .header("X-Api-Key", apiKey)
-      .response(asJson)
-    val response = request.send()
-    Try(response.unsafeBody).flatten
+  def get(endpoint: String, params: (String, String)*): Task[ujson.Value] =
+    IO.fromTry {
+      val request = sttp
+        .get(
+          base
+            .path(s"api/$endpoint")
+            .params(params.toMap)
+        )
+        .header("X-Api-Key", apiKey)
+        .response(asJson)
+      val response = request.send()
+      response.unsafeBody
+    }
+
+  def post(endpoint: String, body: ujson.Value): Task[ujson.Value] =
+    IO.fromTry {
+      val request = sttp
+        .post(base.path(s"api/$endpoint"))
+        .body(body.render())
+        .header("X-Api-Key", apiKey)
+        .response(asJson)
+      val response = request.send()
+      response.unsafeBody
+    }
+
+  def lookup(query: String, resultSize: Int = 5): Task[Seq[Series]] = {
+    get("series/lookup", ("term", query))
+      .map(_.arr.take(resultSize).toSeq.map(x => Series(x)))
   }
 
-  def post(endpoint: String, body: ujson.Value): Try[ujson.Value] = {
-    val request = sttp
-      .post(base.path(s"api/$endpoint"))
-      .body(body.render())
-      .header("X-Api-Key", apiKey)
-      .response(asJson)
-    val response = request.send()
-    Try(response.unsafeBody).flatten
-  }
+  def allSeries: Task[Seq[AddedSeries]] =
+    get("series") map (_.arr.toSeq.map(json => AddedSeries(json)))
 
-  def lookup(query: String, resultSize: Int = 5): Try[Seq[Series]] = {
-    get("series/lookup", ("term", query)).map(_.arr.take(resultSize).toSeq.map(x => Series(x)))
-  }
+  def series(id: Int): Task[AddedSeries] =
+    get(s"series/$id").map(json => AddedSeries(json))
 
-  def allSeries = get("series") map (_.arr.toSeq.map(json => AddedSeries(json)))
-
-  def series(id: Int) = get(s"series/$id").map(json => AddedSeries(json))
-
-  def seasons(series: AddedSeries): Try[Seq[Season]] = {
-    val episodes =
-      get("episode", ("seriesId", series.id.toString)).map(_.arr.toSeq.map(ep => Episode(ep)))
+  def seasons(series: AddedSeries): Task[Seq[Season]] = {
+    val episodes = get("episode", ("seriesId", series.id.toString))
+      .map(_.arr.toSeq.map(ep => Episode(ep)))
 
     def episodesToSeasons(eps: Seq[Episode]) = {
       eps.groupBy(_.seasonNumber).map(x => Season(x._1, x._2))
@@ -52,18 +58,27 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
     episodes.map(eps => episodesToSeasons(eps).toSeq.sortBy(_.n))
   }
 
-  def seriesSearch(query: String, resultSize: Int = 5): Try[Seq[AddedSeries]] = {
-    allSeries.map(_.filter(_.title.toLowerCase.contains(query))).map(_.take(resultSize))
+  def seriesSearch(
+      query: String,
+      resultSize: Int = 5
+  ): Task[Seq[AddedSeries]] = {
+    allSeries
+      .map(_.filter(_.title.toLowerCase.contains(query)))
+      .map(_.take(resultSize))
   }
 
-  def add(series: Series, rootPath: RootFolder, qualityProfile: Profile): Try[ujson.Value] = {
+  def add(
+      series: Series,
+      rootPath: RootFolder,
+      qualityProfile: Profile
+  ): Task[ujson.Value] = {
     series match {
       case series: LookupSeries =>
         val params = series.json
         params("rootFolderPath") = rootPath.path
         params("qualityProfileId") = qualityProfile.id
         post("series", params)
-      case _ => Failure(new Exception("Series already exists"))
+      case _ => Task.fail(new Exception("Series already exists"))
     }
   }
 
@@ -94,7 +109,7 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
     poster(series).getOrElse(blankPoster)
   }
 
-  def importPath(path: os.Path, copy: Boolean): Try[ujson.Value] = {
+  def importPath(path: os.Path, copy: Boolean): Task[ujson.Value] = {
     val importMode = if (copy) "Copy" else "Move"
     val body = ujson.Obj(
       "name" -> "DownloadedEpisodesScan",
@@ -109,8 +124,9 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
   def searchSeason(season: Season) = ???
   def searchEpisode(episode: Episode) = ???
 
-  def profiles = get("profile").map(_.arr.map(json       => Profile(json)).toSeq)
-  def rootFolders = get("rootfolder").map(_.arr.map(json => RootFolder(json)).toSeq)
+  def profiles = get("profile").map(_.arr.map(json => Profile(json)).toSeq)
+  def rootFolders =
+    get("rootfolder").map(_.arr.map(json => RootFolder(json)).toSeq)
   def version = get("system/status").map(_("version").str)
   def diskSpace = get("diskspace").map(_.arr.map(json => DiskSpace(json)).toSeq)
 
