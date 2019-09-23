@@ -62,8 +62,7 @@ object scalarr extends App {
 
   def interactive(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
     val action = for {
-      _       <- putStr("Command: ")
-      command <- reader.readCommand
+      command <- reader.readCommand("Command: ")
       repeat <- command.split(" ").toList match {
         case "hello"  :: _    => putStrLn("hi").as(true)
         case "add"    :: tail => lookup(tail.mkString(" ")).as(true)
@@ -123,7 +122,7 @@ object scalarr extends App {
   def importFiles(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
     val showCopyBoolean: Show[Boolean] = Show.show(if (_) "Copy" else "Move")
     for {
-      path <- reader.readPath
+      path <- reader.readPath("Path: ")
       copy <- chooseFrom(Seq(true, false), "import mode")(reader, showCopyBoolean)
     } yield sonarr.importPath(path, copy)
   }

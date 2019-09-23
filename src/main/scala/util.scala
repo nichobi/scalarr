@@ -57,14 +57,14 @@ object util {
     lazy val commandReader = LineReaderBuilder.builder
       .completer(new StringsCompleter(commandStrings.asJava))
       .build()
-    def readCommand = ZIO.effect(commandReader.readLine)
+    def readCommand(prompt: String) = ZIO.effect(commandReader.readLine(prompt))
 
     lazy val pathReader = LineReaderBuilder.builder
       .completer(new DirectoriesCompleter(os.pwd.toIO))
       .build
-    def readPath = ZIO.effect(pathReader.readLine).map(os.Path(_, os.pwd))
+    def readPath(prompt: String) = ZIO.effect(pathReader.readLine(prompt)).map(os.Path(_, os.pwd))
     private lazy val optionReader = LineReaderBuilder.builder.build
-    def readOption = ZIO.effect(optionReader.readLine)
+    def readOption(prompt: String) = ZIO.effect(optionReader.readLine(prompt))
   }
 
   object interactive {
@@ -104,8 +104,7 @@ object util {
         case _ =>
           for {
             _           <- putStrLn(options.show)
-            _           <- putStr(s"Choose $prompt: ")
-            indexString <- reader.readOption
+            indexString <- reader.readOption(s"Choose $prompt: ")
             index       <- Task(indexString.toInt)
             value       <- Task(options(index))
           } yield value
