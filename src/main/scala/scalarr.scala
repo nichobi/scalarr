@@ -1,5 +1,5 @@
 package scalarr
-import com.typesafe.config.{Config,ConfigFactory}
+import com.typesafe.config.{Config, ConfigFactory}
 import scala.util.{Try, Success, Failure}
 import util.{mergeLines, Reader}
 import util.interactive._
@@ -15,11 +15,12 @@ object scalarr {
 '____/ \.__, \___/\,| \___/\,|     |
 
 """.drop(1).dropRight(2)
-  val configFolder = Try{os.Path(sys.env("XDG_CONFIG_HOME"))}.getOrElse(os.home/".config")/"scalarr"
-  if(!os.exists(configFolder)) os.makeDir.all(configFolder)
-  val configFile = configFolder/"scalarr.conf"
-  if(!os.exists(configFile)) {
-    val defaultConfig = os.read(os.resource/"scalarr.conf")
+  val configFolder = Try { os.Path(sys.env("XDG_CONFIG_HOME")) }
+    .getOrElse(os.home / ".config") / "scalarr"
+  if (!os.exists(configFolder)) os.makeDir.all(configFolder)
+  val configFile = configFolder / "scalarr.conf"
+  if (!os.exists(configFile)) {
+    val defaultConfig = os.read(os.resource / "scalarr.conf")
     os.write(configFile, defaultConfig)
   }
   val config: Config = ConfigFactory.parseFile(configFile.toIO)
@@ -34,7 +35,8 @@ object scalarr {
       case Success(version) =>
         println(s"Connected to Sonarr $version at $sonarrAddress:$sonarrPort")
         interactive
-      case Failure(error) => println(s"Failed to connect to Sonarr at $sonarrAddress:$sonarrPort")
+      case Failure(error) =>
+        println(s"Failed to connect to Sonarr at $sonarrAddress:$sonarrPort")
         println(error)
     }
   }
@@ -42,7 +44,7 @@ object scalarr {
   def interactive() = {
     var keepGoing = true
     implicit val reader = Reader()
-    while(keepGoing) {
+    while (keepGoing) {
       reader.commandReader.readLine("Command: ").split(" ").toList match {
         case "hello"  :: _    => println("hi")
         case "add"    :: tail => lookup(tail.mkString(" "))
@@ -56,7 +58,7 @@ object scalarr {
   }
 
   def lookup(term: String)(implicit reader: Reader): Unit = {
-    implicit val showSeries: Show[Series] = Show.show{s =>
+    implicit val showSeries: Show[Series] = Show.show { s =>
       mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
       |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
     }
@@ -68,7 +70,7 @@ object scalarr {
   }
 
   def series(query: String)(implicit reader: Reader): Unit = {
-    implicit val showSeries: Show[AddedSeries] = Show.show{s =>
+    implicit val showSeries: Show[AddedSeries] = Show.show { s =>
       mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
       |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
     }
@@ -91,17 +93,16 @@ object scalarr {
       qualityProfiles <- sonarr.profiles
       qualityProfile  <- chooseFrom(qualityProfiles, "quality profile")
     } sonarr.add(series, rootFolder, qualityProfile) match {
-      case Success(_) => println(s"Added $series")
+      case Success(_)   => println(s"Added $series")
       case Failure(err) => println(s"Error: ${err.getMessage}")
     }
   }
 
   def importFiles(implicit reader: Reader): Unit = {
-    val showCopyBoolean: Show[Boolean] = Show.show(if(_) "Copy" else "Move")
+    val showCopyBoolean: Show[Boolean] = Show.show(if (_) "Copy" else "Move")
     for {
       path <- reader.readPath
       copy <- chooseFrom(Seq(true, false), "import mode")(reader, showCopyBoolean)
     } sonarr.importPath(path, copy)
   }
 }
-
