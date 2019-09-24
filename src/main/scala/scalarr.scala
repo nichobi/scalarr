@@ -64,14 +64,14 @@ object scalarr extends App {
     val action = for {
       command <- reader.readCommand("Command: ")
       repeat <- command.split(" ").toList match {
-        case "hello"  :: _    => putStrLn("hi").as(true)
-        case "add"    :: tail => lookup(tail.mkString(" ")).as(true)
-        case "series" :: tail => series(tail.mkString(" ")).as(true)
-        case "import" :: _    => importFiles.as(true)
-        case "exit"   :: _    => putStrLn("Exiting...").as(false)
-        case default  :: _    => putStrLn(s"Unkown command: $default").as(true)
-        case _ => Task.succeed(true)
-      }
+                 case "hello" :: _     => putStrLn("hi").as(true)
+                 case "add" :: tail    => lookup(tail.mkString(" ")).as(true)
+                 case "series" :: tail => series(tail.mkString(" ")).as(true)
+                 case "import" :: _    => importFiles.as(true)
+                 case "exit" :: _      => putStrLn("Exiting...").as(false)
+                 case default :: _     => putStrLn(s"Unkown command: $default").as(true)
+                 case _                => Task.succeed(true)
+               }
       _ <- if (repeat) interactive else Task.unit
     } yield ()
     action.orElse(interactive)
@@ -79,7 +79,8 @@ object scalarr extends App {
 
   def lookup(term: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
     implicit val showSeries: Show[Series] = Show.show { s =>
-      mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
+      mergeLines(sonarr.posterOrBlank(s),
+                 s"""${s.title} - ${s.year}
       |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
     }
 
@@ -92,11 +93,12 @@ object scalarr extends App {
 
   def series(query: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
     implicit val showSeries: Show[AddedSeries] = Show.show { s =>
-      mergeLines(sonarr.posterOrBlank(s), s"""${s.title} - ${s.year}
+      mergeLines(sonarr.posterOrBlank(s),
+                 s"""${s.title} - ${s.year}
       |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
     }
     def seasonN(s: Season): Int = s.n
-    def epN(ep: Episode): Int = ep.episodeNumber
+    def epN(ep: Episode): Int   = ep.episodeNumber
 
     for {
       results <- sonarr.seriesSearch(query)

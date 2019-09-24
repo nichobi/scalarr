@@ -36,9 +36,9 @@ object util {
 
   case class TextColumn(rawLines: Seq[String]) {
     val wrappedLines = rawLines.map(l => WrappedString(l))
-    val height = wrappedLines.size
-    val width = wrappedLines.map(_.size).max
-    val lines = wrappedLines.map(l => l + (" " * (width - l.size)))
+    val height       = wrappedLines.size
+    val width        = wrappedLines.map(_.size).max
+    val lines        = wrappedLines.map(l => l + (" " * (width - l.size)))
 
     def get(index: Int) =
       if (lines.indices.contains(index)) lines(index)
@@ -46,9 +46,9 @@ object util {
   }
 
   case class WrappedString(input: String) {
-    val jansi = new AnsiString(input + scala.Console.RESET)
-    def size = jansi.getPlain.toString.size
-    override def toString = jansi.toString + scala.Console.RESET
+    val jansi                           = new AnsiString(input + scala.Console.RESET)
+    def size                            = jansi.getPlain.toString.size
+    override def toString               = jansi.toString + scala.Console.RESET
     def +(other: String): WrappedString = WrappedString(jansi.toString + other)
   }
 
@@ -62,8 +62,8 @@ object util {
     lazy val pathReader = LineReaderBuilder.builder
       .completer(new DirectoriesCompleter(os.pwd.toIO))
       .build
-    def readPath(prompt: String) = ZIO.effect(pathReader.readLine(prompt)).map(os.Path(_, os.pwd))
-    private lazy val optionReader = LineReaderBuilder.builder.build
+    def readPath(prompt: String)   = ZIO.effect(pathReader.readLine(prompt)).map(os.Path(_, os.pwd))
+    private lazy val optionReader  = LineReaderBuilder.builder.build
     def readOption(prompt: String) = ZIO.effect(optionReader.readLine(prompt))
   }
 

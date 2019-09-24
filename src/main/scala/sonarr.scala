@@ -6,10 +6,12 @@ import zio._
 
 case class Sonarr(address: String, port: Int, apiKey: String) {
 
-  val base = uri"$address:$port"
-  implicit val backend = HttpURLConnectionBackend()
+  val base                                          = uri"$address:$port"
+  implicit val backend                              = HttpURLConnectionBackend()
   val asJson: ResponseAs[Try[ujson.Value], Nothing] = asString.map(parseJson)
-  def parseJson(json: String): Try[ujson.Value] = Try(ujson.read(json))
+  def parseJson(json: String): Try[ujson.Value]     = Try(ujson.read(json))
+
+//  implicit val episodeReads = Json.reads[Episode]
 
   def get(endpoint: String, params: (String, String)*): Task[ujson.Value] =
     IO.fromTry {
@@ -112,31 +114,31 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
   def importPath(path: os.Path, copy: Boolean): Task[ujson.Value] = {
     val importMode = if (copy) "Copy" else "Move"
     val body = ujson.Obj(
-      "name" -> "DownloadedEpisodesScan",
+      "name"       -> "DownloadedEpisodesScan",
       "importMode" -> importMode,
-      "path" -> path.toString
+      "path"       -> path.toString
     )
     post("command", body)
   }
 
   def remove(series: Series) = ???
 
-  def searchSeason(season: Season) = ???
+  def searchSeason(season: Season)    = ???
   def searchEpisode(episode: Episode) = ???
 
   def profiles = get("profile").map(_.arr.map(json => Profile(json)).toSeq)
   def rootFolders =
     get("rootfolder").map(_.arr.map(json => RootFolder(json)).toSeq)
-  def version = get("system/status").map(_("version").str)
+  def version   = get("system/status").map(_("version").str)
   def diskSpace = get("diskspace").map(_.arr.map(json => DiskSpace(json)).toSeq)
 
 }
 
 abstract class Series(val json: ujson.Value) {
-  val tvdbId = json("tvdbId").num.toInt
-  val title = json("title").str
-  val year = json("year").num.toInt
-  val status = json("status").str
+  val tvdbId      = json("tvdbId").num.toInt
+  val title       = json("title").str
+  val year        = json("year").num.toInt
+  val status      = json("status").str
   val seasonCount = json("seasonCount").num.toInt
   val posterPath: Try[String] = Try {
     json("images").arr
@@ -176,10 +178,9 @@ object LookupSeries {
 }
 
 case class Episode(json: ujson.Value) {
-  val seasonNumber = json("seasonNumber").num.toInt
+  val seasonNumber  = json("seasonNumber").num.toInt
   val episodeNumber = json("episodeNumber").num.toInt
-  val title = json("title").str
-
+  val title         = json("title").str
   override def toString =
     s"""S${f"$seasonNumber%02d"}E${f"$episodeNumber%02d"} - $title"""
 }
@@ -195,12 +196,12 @@ object Season {
 }
 
 case class DiskSpace(json: ujson.Value) {
-  val path = json("path").str
-  val freeSpace = json("freeSpace").num
+  val path       = json("path").str
+  val freeSpace  = json("freeSpace").num
   val totalSpace = json("totalSpace").num
 
   override def toString = s"$path: $percentUsed% used"
-  def percentUsed = ((1 - freeSpace / totalSpace) * 100 + 0.5).toInt
+  def percentUsed       = ((1 - freeSpace / totalSpace) * 100 + 0.5).toInt
 }
 object DiskSpace {
   implicit val showDiskSpace: Show[DiskSpace] =
@@ -208,8 +209,8 @@ object DiskSpace {
 }
 
 case class Profile(json: ujson.Value) {
-  val id = json("id").num.toInt
-  val name = json("name").str
+  val id                = json("id").num.toInt
+  val name              = json("name").str
   override def toString = name
 }
 object Profile {
@@ -217,8 +218,8 @@ object Profile {
 }
 
 case class RootFolder(json: ujson.Value) {
-  val id = json("id").num.toInt
-  val path = json("path").str
+  val id                = json("id").num.toInt
+  val path              = json("path").str
   override def toString = path
 }
 object RootFolder {
