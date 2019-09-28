@@ -1,4 +1,5 @@
-# scalarr
+![Scalarr](https://raw.githubusercontent.com/nichobi/scalarr/master/logo.png)
+
 Scalarr is a command line tool for managing [Sonarr](https://github.com/Sonarr/Sonarr), fully written in functional Scala.
 
 The project is still very early on in development, but currently looks like this:
@@ -34,3 +35,6 @@ Currently scalarr supports the following commands:
   * `series` - View a series in your library and its seasons/episodes  
   * `import` - Automatically import any video files in the selected path
   * `exit` - Exit scalarr  
+
+The wonderful logo and mascot were designed by [Harofax](https://github.com/harofax)
+

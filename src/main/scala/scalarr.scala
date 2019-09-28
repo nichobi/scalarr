@@ -1,21 +1,13 @@
 package scalarr
 import com.typesafe.config.{Config, ConfigFactory}
 import scala.util.Try
-import util.{putStrLn, putStr, mergeLines, Reader}
+import util.{putStrLn, mergeLines, Reader, generateLogo}
 import util.interactive._
 import cats.Show
 import cats.implicits._
 import zio._
 
 object scalarr extends App {
-  val scalarrLogo = """
- ____
-/    '              |
-\____   .--.  .--.  |  .--.  . __  . __
-     \ /     /   \  | /   \  |/  ' |/  '
-'____/ \.__, \___/\,| \___/\,|     |
-
-""".drop(1).dropRight(1)
   def getConfigPath: Task[os.Path] = Task {
     val configFolder = Try { os.Path(sys.env("XDG_CONFIG_HOME")) }
       .getOrElse(os.home / ".config") / "scalarr"
@@ -46,7 +38,7 @@ object scalarr extends App {
 
   def scalarr: Task[Unit] = {
     for {
-      _          <- putStrLn(scalarrLogo)
+      _          <- putStrLn(generateLogo)
       configPath <- getConfigPath
       _          <- createConfigFile(configPath)
       config     <- readConfig(configPath)

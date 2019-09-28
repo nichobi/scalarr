@@ -115,4 +115,40 @@ object util {
       )
     }
   }
+  def generateLogo = {
+    val scalarrText =
+      """|            «     »
+         | ╓══╖     «   \╪/   »
+         | ║  ╙       «  ╫  »
+         | ╙══╖ ╓══ ╓══╗ ╫ ╓══╗ ╓── ╓──
+         | ╖  ║ ║   ║  ║ ╫ ║  ║ ║   ║
+         | ╙══╜ ╙══ ╙══╚ ╙ ╙══╚ ╨   ╨""".stripMargin
+    mergeLines(scalarrText, randomMascot)
+  }
+
+  def randomMascot: String = generateMascot(eyes(scala.util.Random.nextInt(eyes.size)))
+  def generateMascot(eyes: (String, String)): String = {
+    def inverted(string: String) = fansi.Color.Black(fansi.Back.White(string)).render
+    val base =
+      """|     \╪/
+         |┌─────┴─┬┐
+         |│███████│╡┐
+         |│█^██^██│╪╡
+         |│∙►=-▬: │╡┘
+         |╞╤══════╪╡""".stripMargin.replace("█", fansi.Back.White(" ").render)
+    val parts    = base.split("\\^")
+    val combined = parts(0) + inverted(eyes._1) + parts(1) + inverted(eyes._2) + parts(2)
+    combined
+  }
+  val eyes: Seq[(String, String)] = Seq(
+    ("^", "^"),
+    ("☼", "☼"),
+    ("≥", "≤"),
+    ("*", "*"),
+    ("$", "$"),
+    ("=", "="),
+    ("▲", "▲"),
+    ("-", "-"),
+    ("@", "@")
+  )
 }
