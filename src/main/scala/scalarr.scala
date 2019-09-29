@@ -1,7 +1,7 @@
 package scalarr
 import com.typesafe.config.{Config, ConfigFactory}
 import scala.util.Try
-import util.{putStrLn, mergeLines, Reader, generateLogo}
+import util.{generateLogo, mergeLines, putStrLn, Reader}
 import util.interactive._
 import cats.Show
 import cats.implicits._
@@ -71,9 +71,11 @@ object scalarr extends App {
 
   def lookup(term: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
     implicit val showSeries: Show[Series] = Show.show { s =>
-      mergeLines(sonarr.posterOrBlank(s),
-                 s"""${s.title} - ${s.year}
-      |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
+      mergeLines(
+        sonarr.posterOrBlank(s),
+        s"""${s.title} - ${s.year}
+           |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin
+      )
     }
 
     for {
@@ -85,9 +87,11 @@ object scalarr extends App {
 
   def series(query: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
     implicit val showSeries: Show[AddedSeries] = Show.show { s =>
-      mergeLines(sonarr.posterOrBlank(s),
-                 s"""${s.title} - ${s.year}
-      |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin)
+      mergeLines(
+        sonarr.posterOrBlank(s),
+        s"""${s.title} - ${s.year}
+           |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin
+      )
     }
     def seasonN(s: Season): Int = s.n
     def epN(ep: Episode): Int   = ep.episodeNumber

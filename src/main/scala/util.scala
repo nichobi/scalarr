@@ -110,7 +110,7 @@ object util {
           } yield value
       }
       result.foldM(
-        err    => putStrLn(s"Failed to pick option: $err") *> Task.fail(err),
+        err => putStrLn(s"Failed to pick option: $err") *> Task.fail(err),
         chosen => putStrLn(s"${prompt.capitalize}: $chosen") *> Task.succeed(chosen)
       )
     }
