@@ -126,7 +126,7 @@ object util {
     mergeLines(scalarrText, randomMascot)
   }
 
-  def randomMascot: String = generateMascot(eyes(scala.util.Random.nextInt(eyes.size)))
+  def randomMascot: String = generateMascot(mascotEyes(scala.util.Random.nextInt(mascotEyes.size)))
   def generateMascot(eyes: (String, String)): String = {
     def inverted(string: String) = fansi.Color.Black(fansi.Back.White(string)).render
     val base =
@@ -140,15 +140,15 @@ object util {
     val combined = parts(0) + inverted(eyes._1) + parts(1) + inverted(eyes._2) + parts(2)
     combined
   }
-  val eyes: Seq[(String, String)] = Seq(
-    ("^", "^"),
-    ("☼", "☼"),
-    ("≥", "≤"),
-    ("*", "*"),
-    ("$", "$"),
-    ("=", "="),
-    ("▲", "▲"),
-    ("-", "-"),
-    ("@", "@")
+  // format: off
+  val mascotEyes: Seq[(String, String)] = Seq(
+    ("^", "^"), ("☼", "☼"), ("≥", "≤"), ("*", "*"), ("$", "$"),
+    ("=", "="), ("▲", "▲"), ("-", "-"), ("@", "@"), ("'", "'"),
+    ("T", "T"), ("#", "#"), ("0", "0"), ("~", "~"), ("?", "?"),
+    ("+", "+"), ("x", "x"), ("\\", "/"), (".", "."), ("•", "•"),
+    ("o", "O"), ("u", "u"), ("!", "!"), ("▬", "▬"), ("►", "►"),
+    ("&", "&"), ("∆", "∆"), ("╭", "╮"), ("◕", "◕"), ("◉", "◉"),
+    ("◤", "◤"), ("⁂", "⁂"), ("⁌", "⁍")
   )
+  // format: on
 }
