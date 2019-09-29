@@ -5,7 +5,6 @@ version := "0.2.0"
 scalaVersion := "2.13.0"
 
 libraryDependencies ++= Seq(
-  "com.lihaoyi"           %% "ujson"         % "0.7.5",
   "com.softwaremill.sttp" %% "core"          % "1.6.6",
   "com.typesafe"          % "config"         % "1.3.4",
   "org.jline"             % "jline"          % "3.12.1",
@@ -14,6 +13,7 @@ libraryDependencies ++= Seq(
   "org.fusesource.jansi"  % "jansi"          % "1.18",
   "dev.zio"               %% "zio"           % "1.0.0-RC12-1",
   "org.typelevel"         %% "cats-core"     % "2.0.0",
+  "org.json4s"            %% "json4s-native" % "3.6.7"
 )
 
 scalacOptions := Seq("-unchecked",

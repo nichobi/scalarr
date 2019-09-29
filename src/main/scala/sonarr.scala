@@ -1,20 +1,40 @@
 package scalarr
 import com.softwaremill.sttp._
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 import cats.Show
 import zio._
+import org.json4s._
+import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
+import org.json4s.native.Serialization._
+import org.json4s.CustomSerializer
 
 case class Sonarr(address: String, port: Int, apiKey: String) {
 
-  val base                                          = uri"$address:$port"
-  implicit val backend                              = HttpURLConnectionBackend()
-  val asJson: ResponseAs[Try[ujson.Value], Nothing] = asString.map(parseJson)
-  def parseJson(json: String): Try[ujson.Value]     = Try(ujson.read(json))
+  val base                    = uri"$address:$port"
+  implicit val backend        = HttpURLConnectionBackend()
+  implicit val defaultFormats = DefaultFormats + new SeriesSerializer
 
-//  implicit val episodeReads = Json.reads[Episode]
+  val asJson: ResponseAs[Try[JValue], Nothing] = asString.map(parseJson)
+  def parseJson(json: String): Try[JValue]     = Try(parse(json))
+  class SeriesSerializer
+      extends CustomSerializer[Series](_ =>
+        ({
+          case x: JObject =>
+            val id = (x \ "id").extract[Option[Int]]
+            id match {
+              case Some(_) =>
+                x.extract[AddedSeries]
+              case None =>
+                x.extract[LookupSeries]
+            }
+        }, {
+          case x: Series =>
+            parse(write(x))
+        }))
 
-  def get(endpoint: String, params: (String, String)*): Task[ujson.Value] =
-    IO.fromTry {
+  def get(endpoint: String, params: (String, String)*): Task[JValue] =
+    Task.fromTry {
       val request = sttp
         .get(
           base
@@ -27,11 +47,11 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
       response.unsafeBody
     }
 
-  def post(endpoint: String, body: ujson.Value): Task[ujson.Value] =
-    IO.fromTry {
+  def post(endpoint: String, body: JValue): Task[JValue] =
+    Task.fromTry {
       val request = sttp
         .post(base.path(s"api/$endpoint"))
-        .body(body.render())
+        .body(pretty(render(body)))
         .header("X-Api-Key", apiKey)
         .response(asJson)
       val response = request.send()
@@ -40,24 +60,25 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
 
   def lookup(query: String, resultSize: Int = 5): Task[Seq[Series]] = {
     get("series/lookup", ("term", query))
-      .map(_.arr.take(resultSize).toSeq.map(x => Series(x)))
+      .map(_.extract[List[JValue]].take(resultSize).map(_.extract[Series]))
   }
 
   def allSeries: Task[Seq[AddedSeries]] =
-    get("series") map (_.arr.toSeq.map(json => AddedSeries(json)))
+    get("series").map(_.extract[List[AddedSeries]])
 
   def series(id: Int): Task[AddedSeries] =
-    get(s"series/$id").map(json => AddedSeries(json))
+    get(s"series/$id").map(_.extract[AddedSeries])
 
   def seasons(series: AddedSeries): Task[Seq[Season]] = {
-    val episodes = get("episode", ("seriesId", series.id.toString))
-      .map(_.arr.toSeq.map(ep => Episode(ep)))
-
-    def episodesToSeasons(eps: Seq[Episode]) = {
-      eps.groupBy(_.seasonNumber).map(x => Season(x._1, x._2))
+    def groupIntoSeasons(eps: Seq[Episode]) = {
+      eps.groupBy(_.seasonNumber).map(x => Season(x._1, x._2)).toSeq.sortBy(_.n)
     }
 
-    episodes.map(eps => episodesToSeasons(eps).toSeq.sortBy(_.n))
+    for {
+      json     <- get("episode", ("seriesId", series.id.toString))
+      episodes = json.extract[List[Episode]]
+      seasons  = groupIntoSeasons(episodes)
+    } yield seasons
   }
 
   def seriesSearch(
@@ -71,15 +92,21 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
 
   def add(
       series: Series,
-      rootPath: RootFolder,
+      rootFolder: RootFolder,
       qualityProfile: Profile
-  ): Task[ujson.Value] = {
+  ): Task[JValue] = {
     series match {
       case series: LookupSeries =>
-        val params = series.json
-        params("rootFolderPath") = rootPath.path
-        params("qualityProfileId") = qualityProfile.id
-        post("series", params)
+        for {
+          //Perform a lookup of the tvdbId to get the full json file for the series
+          lookupJson  <- get("series/lookup", ("term", s"tvdb:${series.tvdbId}")).map(_(0))
+          extraParams = parse(s"""{
+            "rootFolderPath": "${rootFolder.path}"
+            "qualityProfileId": ${qualityProfile.id}
+          }""")
+          body        = lookupJson merge extraParams
+          result      <- post("series", body)
+        } yield result
       case _ => Task.fail(new Exception("Series already exists"))
     }
   }
@@ -111,13 +138,11 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
     poster(series).getOrElse(blankPoster)
   }
 
-  def importPath(path: os.Path, copy: Boolean): Task[ujson.Value] = {
+  def importPath(path: os.Path, copy: Boolean): Task[JValue] = {
     val importMode = if (copy) "Copy" else "Move"
-    val body = ujson.Obj(
-      "name"       -> "DownloadedEpisodesScan",
-      "importMode" -> importMode,
-      "path"       -> path.toString
-    )
+    val body = ("name" -> "DownloadedEpisodesScan") ~
+      ("importMode" -> importMode) ~
+      ("path"       -> path.toString)
     post("command", body)
   }
 
@@ -126,64 +151,68 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
   def searchSeason(season: Season)    = ???
   def searchEpisode(episode: Episode) = ???
 
-  def profiles = get("profile").map(_.arr.map(json => Profile(json)).toSeq)
-  def rootFolders =
-    get("rootfolder").map(_.arr.map(json => RootFolder(json)).toSeq)
-  def version   = get("system/status").map(_("version").str)
-  def diskSpace = get("diskspace").map(_.arr.map(json => DiskSpace(json)).toSeq)
-
+  def profiles    = get("profile").map(_.extract[List[Profile]])
+  def rootFolders = get("rootfolder").map(_.extract[List[RootFolder]])
+  def diskSpace   = get("diskspace").map(_.extract[List[DiskSpace]])
+  def version: Task[String] =
+    for {
+      status  <- get("system/status").map(_.extract[Map[String, JValue]])
+      version = status("version").extract[String]
+    } yield version
 }
 
-abstract class Series(val json: ujson.Value) {
-  val tvdbId      = json("tvdbId").num.toInt
-  val title       = json("title").str
-  val year        = json("year").num.toInt
-  val status      = json("status").str
-  val seasonCount = json("seasonCount").num.toInt
-  val posterPath: Try[String] = Try {
-    json("images").arr
-      .map(_.obj)
-      .filter(_("coverType").str == "poster")
+sealed trait Series {
+  val tvdbId: Int
+  val title: String
+  val year: Int
+  val status: String
+  val seasonCount: Int
+  val images: List[Map[String, String]]
+  lazy val posterPath = Try {
+    images
+      .filter(_("coverType") == "poster")
       .head("url")
-      .str
       .takeWhile(_ != '?')
   }
 
   override def toString = s"$title ($year) - tvdb:$tvdbId"
 }
 object Series {
-  def apply(json: ujson.Value): Series = {
-    if (json.obj.contains("id")) new AddedSeries(json)
-    else new LookupSeries(json)
-  }
-
   implicit val showSeries: Show[Series] =
     Show.show(s => s"${s.title} (${s.year}) - tvdb:${s.tvdbId}")
 }
 
-class AddedSeries(json: ujson.Value) extends Series(json) {
-  val id = json("id").num.toInt
+final case class AddedSeries(
+    tvdbId: Int,
+    title: String,
+    year: Int,
+    status: String,
+    seasonCount: Int,
+    images: List[Map[String, String]],
+    id: Int
+) extends Series {
 
   override def toString = s"$title ($year) - id:$id"
 }
 object AddedSeries {
-  def apply(json: ujson.Value) = new AddedSeries(json)
   implicit val showAddedSeries: Show[AddedSeries] =
     Show.show(s => s"${s.title} (${s.year}) - id:${s.id}")
 }
 
-class LookupSeries(json: ujson.Value) extends Series(json) {}
-object LookupSeries {
-  def apply(json: ujson.Value) = new LookupSeries(json)
-}
+final case class LookupSeries(
+    tvdbId: Int,
+    title: String,
+    year: Int,
+    status: String,
+    seasonCount: Int,
+    images: List[Map[String, String]]
+) extends Series
 
-case class Episode(json: ujson.Value) {
-  val seasonNumber  = json("seasonNumber").num.toInt
-  val episodeNumber = json("episodeNumber").num.toInt
-  val title         = json("title").str
+case class Episode(seasonNumber: Int, episodeNumber: Int, title: String) {
   override def toString =
     s"""S${f"$seasonNumber%02d"}E${f"$episodeNumber%02d"} - $title"""
 }
+
 object Episode {
   implicit val showEpiosde: Show[Episode] = Show.fromToString
 }
@@ -195,11 +224,7 @@ object Season {
   implicit val showSeason: Show[Season] = Show.fromToString
 }
 
-case class DiskSpace(json: ujson.Value) {
-  val path       = json("path").str
-  val freeSpace  = json("freeSpace").num
-  val totalSpace = json("totalSpace").num
-
+case class DiskSpace(path: String, freeSpace: Double, totalSpace: Double) {
   override def toString = s"$path: $percentUsed% used"
   def percentUsed       = ((1 - freeSpace / totalSpace) * 100 + 0.5).toInt
 }
@@ -208,18 +233,14 @@ object DiskSpace {
     Show.show(ds => s"${ds.path}: ${ds.percentUsed}% used")
 }
 
-case class Profile(json: ujson.Value) {
-  val id                = json("id").num.toInt
-  val name              = json("name").str
+case class Profile(id: Int, name: String) {
   override def toString = name
 }
 object Profile {
   implicit val showProfile: Show[Profile] = Show.show(_.name)
 }
 
-case class RootFolder(json: ujson.Value) {
-  val id                = json("id").num.toInt
-  val path              = json("path").str
+case class RootFolder(id: Int, path: String) {
   override def toString = path
 }
 object RootFolder {
