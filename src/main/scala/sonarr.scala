@@ -9,7 +9,7 @@ import org.json4s.JsonDSL._
 import org.json4s.native.Serialization._
 import org.json4s.CustomSerializer
 
-case class Sonarr(address: String, port: Int, apiKey: String) {
+class Sonarr(val address: String, val port: Int, apiKey: String) {
 
   val base                    = uri"$address:$port"
   implicit val backend        = HttpURLConnectionBackend()
@@ -160,6 +160,12 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
       status  <- get("system/status").map(_.extract[Map[String, JValue]])
       version = status("version").extract[String]
     } yield version
+
+  override def toString = s"""Scalarr($address, $port, REDACTED)"""
+}
+
+object Sonarr {
+  def apply(address: String, port: Int, apiKey: String) = new Sonarr(address, port, apiKey)
 }
 
 sealed trait Series {
