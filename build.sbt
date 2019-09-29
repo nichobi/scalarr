@@ -2,7 +2,7 @@ name := "scalarr"
 
 version := "0.2.0"
 
-scalaVersion := "2.13.0"
+scalaVersion := "2.13.1"
 
 libraryDependencies ++= Seq(
   "com.softwaremill.sttp" %% "core"          % "1.6.6",
