@@ -17,6 +17,7 @@ case class Sonarr(address: String, port: Int, apiKey: String) {
 
   val asJson: ResponseAs[Try[JValue], Nothing] = asString.map(parseJson)
   def parseJson(json: String): Try[JValue]     = Try(parse(json))
+
   class SeriesSerializer
       extends CustomSerializer[Series](_ =>
         ({
