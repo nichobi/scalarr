@@ -1,13 +1,16 @@
 package scalarr
 import com.typesafe.config.{Config, ConfigFactory}
 import scala.util.Try
-import util.{generateLogo, mergeLines, putStrLn, Reader}
-import util.interactive._
+import scalarr.util.formatting.mergeLines
+import scalarr.util.console.{putStrLn, Reader}
+import scalarr.util.interactive._
+import scalarr.util.art.generateLogo
+import scalarr.sonarr._
 import cats.Show
 import cats.implicits._
-import zio._
+import zio.{App, IO, Task}
 
-object scalarr extends App {
+object main extends App {
   def getConfigPath: Task[os.Path] = Task {
     val configFolder = Try { os.Path(sys.env("XDG_CONFIG_HOME")) }
       .getOrElse(os.home / ".config") / "scalarr"
