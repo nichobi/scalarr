@@ -1,6 +1,5 @@
 package scalarr
 import com.typesafe.config.{Config, ConfigFactory}
-import scala.util.Try
 import scalarr.util.formatting.mergeLines
 import scalarr.util.console.{putStrLn, Reader}
 import scalarr.util.interactive._
