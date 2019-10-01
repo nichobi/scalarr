@@ -11,11 +11,11 @@ import cats.implicits._
 import zio.{App, IO, Task}
 
 object main extends App {
-  def getConfigPath: Task[os.Path] = Task {
-    val configFolder = Try { os.Path(sys.env("XDG_CONFIG_HOME")) }
-      .getOrElse(os.home / ".config") / "scalarr"
-    configFolder / "scalarr.conf"
-  }
+  def getConfigPath: Task[os.Path] =
+    Task(sys.env("XDG_CONFIG_HOME"))
+      .map(os.Path(_))
+      .orElse(Task(os.home / ".config"))
+      .map(_ / "scalarr" / "scalarr.conf")
 
   def createConfigFile(configFile: os.Path): Task[Unit] = Task {
     val configFolder = configFile / os.up
