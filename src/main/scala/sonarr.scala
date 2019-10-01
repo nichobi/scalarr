@@ -17,8 +17,10 @@ object sonarr {
     implicit val backend        = HttpURLConnectionBackend()
     implicit val defaultFormats = DefaultFormats + new SeriesSerializer
 
-    val asJson: ResponseAs[Try[JValue], Nothing] = asString.map(parseJson)
-    def parseJson(json: String): Try[JValue]     = Try(parse(json))
+    def asExtracted[A](implicit m: Manifest[A]): ResponseAs[Task[A], Nothing] =
+      asString.map(extractJson[A])
+    def extractJson[A](json: String)(implicit m: Manifest[A]): Task[A] =
+      Task(parse(json)).map(_.extract[A])
 
     class SeriesSerializer
         extends CustomSerializer[Series](_ =>
@@ -36,41 +38,39 @@ object sonarr {
               parse(write(x))
           }))
 
-    def get(endpoint: String, params: (String, String)*): Task[JValue] =
-      Task.fromTry {
-        val request = sttp
-          .get(
-            base
-              .path(s"api/$endpoint")
-              .params(params.toMap)
-          )
-          .header("X-Api-Key", apiKey)
-          .response(asJson)
-        val response = request.send()
-        response.unsafeBody
-      }
+    def get[A](endpoint: String, params: (String, String)*)(implicit m: Manifest[A]): Task[A] = {
+      val request = sttp
+        .get(
+          base
+            .path(s"api/$endpoint")
+            .params(params.toMap)
+        )
+        .header("X-Api-Key", apiKey)
+        .response(asExtracted[A])
+      val response = request.send()
+      Task(response.unsafeBody).flatten
+    }
 
-    def post(endpoint: String, body: JValue): Task[JValue] =
-      Task.fromTry {
-        val request = sttp
-          .post(base.path(s"api/$endpoint"))
-          .body(pretty(render(body)))
-          .header("X-Api-Key", apiKey)
-          .response(asJson)
-        val response = request.send()
-        response.unsafeBody
-      }
+    def post(endpoint: String, body: JValue): Task[JValue] = {
+      val request = sttp
+        .post(base.path(s"api/$endpoint"))
+        .body(pretty(render(body)))
+        .header("X-Api-Key", apiKey)
+        .response(asExtracted[JValue])
+      val response = request.send()
+      Task(response.unsafeBody).flatten
+    }
 
     def lookup(query: String, resultSize: Int = 5): Task[Seq[Series]] = {
-      get("series/lookup", ("term", query))
-        .map(_.extract[List[JValue]].take(resultSize).map(_.extract[Series]))
+      get[List[JValue]]("series/lookup", ("term", query))
+        .map(_.take(resultSize).map(_.extract[Series]))
     }
 
     def allSeries: Task[Seq[AddedSeries]] =
-      get("series").map(_.extract[List[AddedSeries]])
+      get[List[AddedSeries]]("series")
 
     def series(id: Int): Task[AddedSeries] =
-      get(s"series/$id").map(_.extract[AddedSeries])
+      get[AddedSeries](s"series/$id")
 
     def seasons(series: AddedSeries): Task[Seq[Season]] = {
       def groupIntoSeasons(eps: Seq[Episode]) = {
@@ -78,8 +78,7 @@ object sonarr {
       }
 
       for {
-        json     <- get("episode", ("seriesId", series.id.toString))
-        episodes = json.extract[List[Episode]]
+        episodes <- get[List[Episode]]("episode", ("seriesId", series.id.toString))
         seasons  = groupIntoSeasons(episodes)
       } yield seasons
     }
@@ -129,11 +128,12 @@ object sonarr {
         case series: LookupSeries =>
           for {
             //Perform a lookup of the tvdbId to get the full json file for the series
-            lookupJson  <- get("series/lookup", ("term", s"tvdb:${series.tvdbId}")).map(_(0))
+            lookupJson <- get[List[JValue]]("series/lookup", ("term", s"tvdb:${series.tvdbId}"))
+                           .map(_.head)
             extraParams = parse(s"""{
-            "rootFolderPath": "${rootFolder.path}"
-            "qualityProfileId": ${qualityProfile.id}
-          }""")
+              "rootFolderPath": "${rootFolder.path}"
+              "qualityProfileId": ${qualityProfile.id}
+            }""")
             body        = lookupJson merge extraParams
             result      <- post("series", body)
           } yield result
@@ -154,12 +154,12 @@ object sonarr {
     def searchSeason(season: Season)    = ???
     def searchEpisode(episode: Episode) = ???
 
-    def profiles    = get("profile").map(_.extract[List[Profile]])
-    def rootFolders = get("rootfolder").map(_.extract[List[RootFolder]])
-    def diskSpace   = get("diskspace").map(_.extract[List[DiskSpace]])
+    def profiles    = get[List[Profile]]("profile")
+    def rootFolders = get[List[RootFolder]]("rootfolder")
+    def diskSpace   = get[List[DiskSpace]]("diskspace")
     def version: Task[String] =
       for {
-        status  <- get("system/status").map(_.extract[Map[String, JValue]])
+        status  <- get[Map[String, JValue]]("system/status")
         version = status("version").extract[String]
       } yield version
 
