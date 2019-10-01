@@ -69,7 +69,7 @@ object main extends App {
                }
       _ <- if (repeat) interactive else Task.unit
     } yield ()
-    action.orElse(interactive)
+    action.catchAll(err => putStrLn(s"Error: $err") *> interactive)
   }
 
   def lookup(term: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
