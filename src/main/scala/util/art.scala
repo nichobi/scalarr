@@ -22,9 +22,7 @@ object art {
       | ╖  ║ ║   ║  ║ ╫ ║  ║ ║   ║
       | ╙══╜ ╙══ ╙══╚ ╙ ╙══╚ ╨   ╨""".stripMargin
 
-  def generateLogo = {
-    mergeLines(scalarrText, randomMascot)
-  }
+  def generateLogo = mergeLines(scalarrText, randomMascot)
 
   def defaultMascot: String = generateMascot(mascotEyes.head)
 

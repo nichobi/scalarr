@@ -61,10 +61,9 @@ object sonarr {
       Task(response.unsafeBody).flatten
     }
 
-    def lookup(query: String, resultSize: Int = 5): Task[Seq[Series]] = {
+    def lookup(query: String, resultSize: Int = 5): Task[Seq[Series]] =
       get[List[JValue]]("series/lookup", ("term", query))
         .map(_.take(resultSize).map(_.extract[Series]))
-    }
 
     def allSeries: Task[Seq[AddedSeries]] =
       get[List[AddedSeries]]("series")
@@ -73,9 +72,8 @@ object sonarr {
       get[AddedSeries](s"series/$id")
 
     def seasons(series: AddedSeries): Task[Seq[Season]] = {
-      def groupIntoSeasons(eps: Seq[Episode]) = {
+      def groupIntoSeasons(eps: Seq[Episode]) =
         eps.groupBy(_.seasonNumber).map(x => Season(x._1, x._2)).toSeq.sortBy(_.n)
-      }
 
       for {
         episodes <- get[List[Episode]]("episode", ("seriesId", series.id.toString))
@@ -101,29 +99,23 @@ object sonarr {
       case Failure(x) => Failure(x)
     }
 
-    def poster(series: Series): Try[String] = {
-      posterUrl(series).flatMap(url => imgConvert(url))
-    }
+    def poster(series: Series): Try[String] = posterUrl(series).flatMap(url => imgConvert(url))
 
-    def posterOrBlank(series: Series): String = {
-      val blankPoster: String = "      \n" * 4
-      poster(series).getOrElse(blankPoster)
-    }
+    def posterOrBlank(series: Series): String = poster(series).getOrElse("      \n" * 4)
 
     def seriesSearch(
         query: String,
         resultSize: Int = 5
-    ): Task[Seq[AddedSeries]] = {
+    ): Task[Seq[AddedSeries]] =
       allSeries
         .map(_.filter(_.title.toLowerCase.contains(query)))
         .map(_.take(resultSize))
-    }
 
     def add(
         series: Series,
         rootFolder: RootFolder,
         qualityProfile: Profile
-    ): Task[JValue] = {
+    ): Task[JValue] =
       series match {
         case series: LookupSeries =>
           for {
@@ -134,12 +126,11 @@ object sonarr {
               "rootFolderPath": "${rootFolder.path}"
               "qualityProfileId": ${qualityProfile.id}
             }""")
-            body        = lookupJson merge extraParams
+            body        = lookupJson.merge(extraParams)
             result      <- post("series", body)
           } yield result
         case _ => Task.fail(new Exception("Series already exists"))
       }
-    }
 
     def importPath(path: os.Path, copy: Boolean): Task[JValue] = {
       val importMode = if (copy) "Copy" else "Move"

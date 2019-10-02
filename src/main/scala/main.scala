@@ -38,7 +38,7 @@ object main extends App {
 
   def run(args: List[String]): IO[Nothing, Int] = scalarr.fold(_ => 1, _ => 0)
 
-  def scalarr: Task[Unit] = {
+  def scalarr: Task[Unit] =
     for {
       _          <- putStrLn(generateLogo)
       configPath <- getConfigPath
@@ -52,7 +52,6 @@ object main extends App {
       reader     <- Task.succeed(Reader())
       _          <- interactive(sonarr, reader)
     } yield ()
-  }
 
   def interactive(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
     val action = for {
@@ -110,7 +109,7 @@ object main extends App {
     } yield ()
   }
 
-  def add(series: Series)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
+  def add(series: Series)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
     for {
       rootFolders     <- sonarr.rootFolders
       rootFolder      <- chooseFrom(rootFolders, "root folder")
@@ -119,7 +118,6 @@ object main extends App {
       _               <- sonarr.add(series, rootFolder, qualityProfile)
       _               <- putStrLn(s"Added $series")
     } yield ()
-  }
 
   def importFiles(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
     val showCopyBoolean: Show[Boolean] = Show.show(if (_) "Copy" else "Move")
