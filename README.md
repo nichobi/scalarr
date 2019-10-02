@@ -36,5 +36,14 @@ Currently scalarr supports the following commands:
   * `import` - Automatically import any video files in the selected path
   * `exit` - Exit scalarr  
 
-The wonderful logo and mascot were designed by [Harofax](https://github.com/harofax)
+# Acknowledgements
+The wonderful logo and mascot were designed by [Harofax](https://github.com/harofax), saving Scalarr from my poor attempts at ASCII art.
+
+Posters are drawn using a slightly modified version of [TerminalImageViewer](https://github.com/stefanhaustein/TerminalImageViewer).
+
+Scalarr relies heavily on ZIO and I owe a lot to [John A. De Goes](https://github.com/jdegoes) not only for creating ZIO, but also for his excellent talks without which Scalarr would look nothing like it does today.
+
+Scalarr has several more [dependencies](https://github.com/nichobi/scalarr/blob/master/build.sbt), and I thank all their contributors for their work.
+
+Finally, my thanks to everyone who has contributed to Scala itself, and [Björn Regnell](https://github.com/bjornregnell) for introducing me to and teaching the language at [LTH](https://www.lth.se/).
 
