@@ -72,9 +72,9 @@ object main extends App {
   }
 
   def lookup(term: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
-    implicit val showSeries: Show[Series] = Show.show { s =>
+    def showSeries(posters: Map[Series, String]): Show[Series] = Show.show { s =>
       mergeLines(
-        sonarr.posterOrBlank(s),
+        posters(s),
         s"""${s.title} - ${s.year}
            |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin
       )
@@ -82,15 +82,16 @@ object main extends App {
 
     for {
       results <- sonarr.lookup(term)
-      series  <- chooseFrom(results, "series")(reader, showSeries)
+      posters <- Task.foreachPar(results)(series => Task(series -> sonarr.posterOrBlank(series)))
+      series  <- chooseFrom(results, "series")(reader, showSeries(posters.toMap))
       _       <- add(series)
     } yield ()
   }
 
   def series(query: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
-    implicit val showSeries: Show[AddedSeries] = Show.show { s =>
+    def showSeries(posters: Map[Series, String]): Show[AddedSeries] = Show.show { s =>
       mergeLines(
-        sonarr.posterOrBlank(s),
+        posters(s),
         s"""${s.title} - ${s.year}
            |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin
       )
@@ -100,7 +101,8 @@ object main extends App {
 
     for {
       results <- sonarr.seriesSearch(query)
-      series  <- chooseFrom(results, "series")
+      posters <- Task.foreachPar(results)(series => Task(series -> sonarr.posterOrBlank(series)))
+      series  <- chooseFrom(results, "series")(reader, showSeries(posters.toMap))
       seasons <- sonarr.seasons(series)
       season  <- chooseFrom(seasons, "season", seasonN)
       episode <- chooseFrom(season.eps, "episode", epN)
