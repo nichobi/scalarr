@@ -46,9 +46,7 @@ object main extends App {
       config     <- readConfig(configPath)
       sonarr     <- createSonarr(config)
       version    <- sonarr.version
-      address    <- Task.succeed(sonarr.address)
-      port       <- Task.succeed(sonarr.port)
-      _          <- putStrLn(s"Connected to Sonarr $version at $address:$port")
+      _          <- putStrLn(s"Connected to Sonarr $version at ${sonarr.address}:${sonarr.port}")
       reader     <- Task.succeed(Reader())
       _          <- interactive(sonarr, reader)
     } yield ()
