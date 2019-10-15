@@ -133,9 +133,9 @@ object sonarr {
             lookupJson <- get[List[JValue]]("series/lookup", ("term", s"tvdb:${series.tvdbId}"))
                            .map(_.head)
             extraParams = parse(s"""{
-              "rootFolderPath": "${rootFolder.path}"
-              "qualityProfileId": ${qualityProfile.id}
-            }""")
+                                   |  "rootFolderPath": "${rootFolder.path}"
+                                   |  "qualityProfileId": ${qualityProfile.id}
+                                   |}""".stripMargin)
             body        = lookupJson.merge(extraParams)
             result      <- post("series", body)
           } yield result
