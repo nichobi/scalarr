@@ -74,7 +74,7 @@ object sonarr {
 
     def lookup(query: String, resultSize: Int = 5): Task[Seq[Series]] =
       get[List[JValue]]("series/lookup", ("term", query))
-        .map(_.take(resultSize).map(_.extract[Series]))
+        .map(_.take(resultSize).map(_.extract[LookupSeries]))
 
     def allSeries: Task[Seq[AddedSeries]] =
       get[List[AddedSeries]]("series")
