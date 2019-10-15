@@ -16,15 +16,18 @@ object main extends App {
       .orElse(Task(os.home / ".config"))
       .map(_ / "scalarr" / "scalarr.conf")
 
-  def createConfigFile(configFile: os.Path): Task[Unit] = Task {
-    val configFolder = configFile / os.up
-    if (!os.exists(configFolder)) os.makeDir.all(configFolder)
-
-    if (!os.exists(configFile)) {
-      val defaultConfig = os.read(os.resource / "scalarr.conf")
-      os.write(configFile, defaultConfig)
-    }
-  }
+  def createConfigFile(configFile: os.Path): Task[Unit] =
+    for {
+      configFolder <- Task(configFile / os.up)
+      _            <- if (!os.exists(configFolder)) Task(os.makeDir.all(configFolder)) else Task.unit
+      _ <- if (!os.exists(configFile)) for {
+            defaultConfig <- Task(os.read(os.resource / "scalarr.conf"))
+            _             <- Task(os.write(configFile, defaultConfig))
+            _ <- putStrLn(
+                  s"Wrote new config file to ${configFile.toString}\nPlease edit it and restart Scalarr")
+          } yield ()
+          else Task.unit
+    } yield ()
 
   def readConfig(configFile: os.Path): Task[Config] = Task(ConfigFactory.parseFile(configFile.toIO))
 
@@ -36,7 +39,8 @@ object main extends App {
       sonarr  <- Task(Sonarr(address, port, key))
     } yield sonarr
 
-  def run(args: List[String]): IO[Nothing, Int] = main.fold(_ => 1, _ => 0)
+  def run(args: List[String]): IO[Nothing, Int] =
+    main.foldM(err => putStrLn(s"Error: ${err.getMessage}").as(1), _ => Task.succeed(0))
 
   def main: Task[Unit] =
     for {
