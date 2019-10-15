@@ -1,6 +1,5 @@
 package scalarr
 import com.typesafe.config.{Config, ConfigFactory}
-import scalarr.util.formatting.mergeLines
 import scalarr.util.console.{putStrLn, Reader}
 import scalarr.util.interactive._
 import scalarr.util.art.generateLogo
@@ -8,6 +7,7 @@ import scalarr.sonarr._
 import cats.Show
 import cats.implicits._
 import zio.{App, IO, Task}
+import scalarr.util.actions._
 
 object main extends App {
   def getConfigPath: Task[os.Path] =
@@ -68,44 +68,17 @@ object main extends App {
     action.catchAll(err => putStrLn(s"Error: $err") *> interactive)
   }
 
-  def lookup(term: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
-    def showSeries(posters: Map[Series, String]): Show[Series] = Show.show { s =>
-      mergeLines(
-        posters(s),
-        s"""${s.title} - ${s.year}
-           |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin
-      )
-    }
-
+  def lookup(term: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
     for {
       results <- sonarr.lookup(term)
-      posters <- Task.foreachPar(results)(series => Task(series -> sonarr.posterOrBlank(series)))
-      series  <- chooseFrom(results, "series")(reader, showSeries(posters.toMap))
-      _       <- add(series)
+      _       <- chooseAction(results)
     } yield ()
-  }
 
-  def series(query: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
-    def showSeries(posters: Map[Series, String]): Show[AddedSeries] = Show.show { s =>
-      mergeLines(
-        posters(s),
-        s"""${s.title} - ${s.year}
-           |${s.status.capitalize} - Seasons: ${s.seasonCount}""".stripMargin
-      )
-    }
-    def seasonN(s: Season): Int = s.n
-    def epN(ep: Episode): Int   = ep.episodeNumber
-
+  def series(query: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
     for {
       results <- sonarr.seriesSearch(query)
-      posters <- Task.foreachPar(results)(series => Task(series -> sonarr.posterOrBlank(series)))
-      series  <- chooseFrom(results, "series")(reader, showSeries(posters.toMap))
-      seasons <- sonarr.seasons(series)
-      season  <- chooseFrom(seasons, "season", seasonN)
-      episode <- chooseFrom(season.eps, "episode", epN)
-      _       <- putStrLn(episode.toString)
+      _       <- chooseAction(results)
     } yield ()
-  }
 
   def add(series: Series)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
     for {
