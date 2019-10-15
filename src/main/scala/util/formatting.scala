@@ -12,7 +12,7 @@ object formatting {
     lines.mkString("\n")
   }
 
-  case class TextColumn(rawLines: Seq[String]) {
+  private final case class TextColumn(rawLines: Seq[String]) {
     val wrappedLines = rawLines.map(l => WrappedString(l))
     val height       = wrappedLines.size
     val width        = wrappedLines.map(_.size).max
@@ -23,11 +23,13 @@ object formatting {
       else " " * width
   }
 
-  case class WrappedString(input: String) {
+  private final case class WrappedString(input: String) {
     val jansi = new AnsiString(input + scala.Console.RESET)
     def size  = jansi.getPlain.toString.size
 
     override def toString               = jansi.toString + scala.Console.RESET
     def +(other: String): WrappedString = WrappedString(jansi.toString + other)
   }
+
+  def monitoredSymbol(monitored: Boolean) = if (monitored) "●" else "○"
 }

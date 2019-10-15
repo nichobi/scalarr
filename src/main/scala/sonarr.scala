@@ -1,4 +1,6 @@
 package scalarr
+
+import scalarr.util.formatting.monitoredSymbol
 import com.softwaremill.sttp._
 import scala.util.{Failure, Success, Try}
 import util.art.imgConvert
@@ -82,8 +84,19 @@ object sonarr {
       get[AddedSeries](s"series/$id")
 
     def seasons(series: AddedSeries): Task[Seq[Season]] = {
+      def getSeasonInfo(i: Int) = {
+        series.seasons.find(_.seasonNumber == i).get
+      }
       def groupIntoSeasons(eps: Seq[Episode]) =
-        eps.groupBy(_.seasonNumber).map(x => Season(x._1, x._2)).toSeq.sortBy(_.n)
+        eps
+          .groupBy(_.seasonNumber)
+          .map {
+            case seasonNumber -> episodes =>
+              val info = getSeasonInfo(seasonNumber)
+              Season(seasonNumber, episodes, series.id, info.monitored)
+          }
+          .toSeq
+          .sortBy(_.n)
 
       for {
         episodes <- get[List[Episode]]("episode", ("seriesId", series.id.toString))
@@ -199,15 +212,24 @@ object sonarr {
       status: String,
       seasonCount: Int,
       images: List[Map[String, String]],
-      id: Int
+      id: Int,
+      monitored: Boolean,
+      seasons: Seq[SeasonInfo]
   ) extends Series {
-
-    override def toString = s"$title ($year) - id:$id"
+    override def toString = s"${monitoredSymbol(monitored)} $title ($year) - id:$id"
   }
   object AddedSeries {
     implicit val showAddedSeries: Show[AddedSeries] =
       Show.show(s => s"${s.title} (${s.year}) - id:${s.id}")
   }
+  case class SeasonInfo(seasonNumber: Int, monitored: Boolean, statistics: SeasonStatistics)
+  case class SeasonStatistics(
+      episodeFileCount: Int,
+      episodeCount: Int,
+      totalEpisodeCount: Int,
+      sizeOnDisk: Int,
+      percentOfEpisodes: Int
+  )
 
   final case class LookupSeries(
       tvdbId: Int,
@@ -248,14 +270,14 @@ object sonarr {
       Show.show(ds => s"${ds.path}: ${ds.percentUsed}% used")
   }
 
-  case class Profile(id: Int, name: String) {
+  final case class Profile(id: Int, name: String) {
     override def toString = name
   }
   object Profile {
     implicit val showProfile: Show[Profile] = Show.show(_.name)
   }
 
-  case class RootFolder(id: Int, path: String) {
+  final case class RootFolder(id: Int, path: String) {
     override def toString = path
   }
   object RootFolder {
