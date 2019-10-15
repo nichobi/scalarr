@@ -177,6 +177,39 @@ object sonarr {
       post("command", body)
     }
 
+    def setMonitored(series: AddedSeries, monitor: Boolean): Task[Unit] =
+      for {
+        series       <- get[JValue](s"series/${series.id}")
+        seriesEdited <- Task(series.replace("monitored" :: Nil, JBool(monitor)))
+        _            <- put("series", seriesEdited)
+      } yield ()
+    def setMonitored(season: Season, monitor: Boolean): Task[Unit] =
+      for {
+        series  <- get[JValue](s"series/${season.seriesId}")
+        seasons <- Task((series \ "seasons").extract[List[JValue]])
+        seasonsSplit <- Task(
+                         seasons
+                           .partition(x => (x \ "seasonNumber").extract[Int] == season.n)
+                       )
+        (seasonToEdit, otherSeasons) = (seasonsSplit._1.head, seasonsSplit._2)
+        seasonEdited <- Task(seasonToEdit.mapField {
+                         case ("monitored", JBool(_)) => "monitored" -> JBool(monitor); case x => x
+                       })
+        seasonsEdited <- Task(JArray(otherSeasons :+ seasonEdited))
+        seriesEdited <- Task(series.mapField {
+                         case ("seasons" -> JArray(_)) => "seasons" -> seasonsEdited; case x => x
+                       })
+        _ <- put("series", seriesEdited)
+      } yield ()
+    def setMonitored(episode: Episode, monitor: Boolean): Task[Unit] =
+      for {
+        json        <- get[JValue](s"episode/${episode.id}")
+        extraParams = parse(s"""{
+                               |  "monitored": $monitor
+                               |}""".stripMargin)
+        response    <- put("episode", json.merge(extraParams))
+      } yield ()
+
     def profiles    = get[List[Profile]]("profile")
     def rootFolders = get[List[RootFolder]]("rootfolder")
     def diskSpace   = get[List[DiskSpace]]("diskspace")
