@@ -49,8 +49,9 @@ object interactive {
         } yield value
     }
     result.foldM(
-      err => putStrLn(s"Failed to pick option: $err") *> Task.fail(err),
+      err => Task.fail(new Exception("Failure picking option: " + err.getMessage, err)),
       chosen => putStrLn(s"${prompt.capitalize}: $chosen") *> Task.succeed(chosen)
     )
   }
+
 }
