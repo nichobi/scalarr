@@ -13,6 +13,8 @@ object console {
     ZIO.effectTotal(print(line))
 
   class Reader() {
+    lazy val stringReader          = LineReaderBuilder.builder.build()
+    def readString(prompt: String) = Task(stringReader.readLine(prompt))
     private val commandStrings     = Seq("search", "exit", "series", "import").sorted
     lazy val commandReader = LineReaderBuilder.builder
       .completer(new StringsCompleter(commandStrings.asJava))
