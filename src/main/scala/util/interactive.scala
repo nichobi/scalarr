@@ -11,7 +11,7 @@ object interactive {
       options: Seq[A],
       prompt: String
   )(implicit reader: Reader, showA: Show[A]): Task[A] = {
-    val map = SortedMap((1 to options.size).zip(options): _*)
+    val map = SortedMap.from((1 to options.size).zip(options))
     chooseFromHelper(map, prompt)
   }
 
@@ -19,7 +19,7 @@ object interactive {
       implicit reader: Reader,
       showA: Show[A]
   ): Task[A] = {
-    val map = SortedMap(options.map(o => indexer(o) -> o): _*)
+    val map = SortedMap.from(options.map(o => indexer(o) -> o))
     chooseFromHelper(map, prompt)
   }
 
