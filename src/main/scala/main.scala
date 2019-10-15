@@ -36,9 +36,9 @@ object main extends App {
       sonarr  <- Task(Sonarr(address, port, key))
     } yield sonarr
 
-  def run(args: List[String]): IO[Nothing, Int] = scalarr.fold(_ => 1, _ => 0)
+  def run(args: List[String]): IO[Nothing, Int] = main.fold(_ => 1, _ => 0)
 
-  def scalarr: Task[Unit] =
+  def main: Task[Unit] =
     for {
       _          <- putStrLn(generateLogo)
       configPath <- getConfigPath
