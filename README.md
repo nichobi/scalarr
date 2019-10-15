@@ -6,6 +6,10 @@ Here's a preview of what it looks like
 ![Preview gif](https://raw.githubusercontent.com/nichobi/scalarr/master/scalarr.gif)
 
 # Getting started
+## Installation
+Scalarr is available on the AUR. If you're on an Arch, you can install it from [here](https://aur.archlinux.org/packages/scalarr/).
+
+For other systems head over to the [release page](https://github.com/nichobi/scalarr/releases), download a jar file, and follow the instructions further down to run it.
 ## How to build this repo
 
 This project is set up with [scala build tool, sbt](http://www.scala-sbt.org). To build Scalarr you just need to:
