@@ -10,7 +10,6 @@ import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
 import org.json4s.native.Serialization._
-import org.json4s.CustomSerializer
 
 object sonarr {
   class Sonarr(val address: String, val port: Int, apiKey: String) {
@@ -84,9 +83,8 @@ object sonarr {
       get[AddedSeries](s"series/$id")
 
     def seasons(series: AddedSeries): Task[Seq[Season]] = {
-      def getSeasonInfo(i: Int) = {
+      def getSeasonInfo(i: Int) =
         series.seasons.find(_.seasonNumber == i).get
-      }
       def groupIntoSeasons(eps: Seq[Episode]) =
         eps
           .groupBy(_.seasonNumber)
@@ -207,7 +205,7 @@ object sonarr {
         extraParams = parse(s"""{
                                |  "monitored": $monitor
                                |}""".stripMargin)
-        response    <- put("episode", json.merge(extraParams))
+        _           <- put("episode", json.merge(extraParams))
       } yield ()
 
     def profiles    = get[List[Profile]]("profile")
