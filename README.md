@@ -2,7 +2,7 @@
 
 Scalarr is a command line tool for managing [Sonarr](https://github.com/Sonarr/Sonarr), fully written in functional Scala.
 
-The project is still very early on in development, but currently looks like this:
+Here's a preview of what it looks like
 ![Preview gif](https://raw.githubusercontent.com/nichobi/scalarr/master/scalarr.gif)
 
 # Getting started
@@ -18,22 +18,21 @@ This project is set up with [scala build tool, sbt](http://www.scala-sbt.org). T
 
 * Run either of these commands and sbt will download and prepare all [dependencies](https://github.com/nichobi/scalarr/blob/master/build.sbt):
   * `sbt run` to compile and run Scalarr on the fly
-  * `sbt assembly` to build a jar of Scalarr and all its required libraries, in the directory `target/scala-2.13/`. The file will be called something like `scalarr-assembly-0.1.0-SNAPSHOT.jar`
-sbt will automatically 
+  * `sbt assembly` to build a jar of Scalarr and all its required libraries, in the directory `target/scala-2.13/`. The file will be called something like `scalarr-assembly-1.0.0.jar`
   
 ## Running scalarr
 After you have your jar file, you can run it with java. For example if you have a file `scalarr.jar` in your current directory, run it with:
 `java -jar scalarr.jar`
 Or if you've just built it: 
-`java -jar target/scala-2.13/scalarr-assembly-0.2.0-SNAPSHOT.jar`
+`java -jar target/scala-2.13/scalarr-assembly-1.0.0.jar`
   
 On first launch a config file will be placed in your home directory's `.config` folder. Fill in your address, port and Sonarr API key and then run scalarr again to connect to your server. Once you're connected, you can cycle through available commands with the tab key.
   
 Currently scalarr supports the following commands:  
 
-  * `add` - Add a new series to your library  
+  * `search` - Perform a search for new series to add to your library  
   * `series` - View a series in your library and its seasons/episodes  
-  * `import` - Automatically import any video files in the selected path
+  * `import` - Automatically import any video files in the selected path  
   * `exit` - Exit scalarr  
 
 # Acknowledgements
@@ -42,6 +41,8 @@ The wonderful logo and mascot were designed by [Harofax](https://github.com/haro
 Posters are drawn using a slightly modified version of [TerminalImageViewer](https://github.com/stefanhaustein/TerminalImageViewer).
 
 Scalarr relies heavily on ZIO and I owe a lot to [John A. De Goes](https://github.com/jdegoes) not only for creating ZIO, but also for his excellent talks without which Scalarr would look nothing like it does today.
+
+Much of the command flow was inspired by [beets](https://github.com/beetbox/beets).
 
 Scalarr has several more [dependencies](https://github.com/nichobi/scalarr/blob/master/build.sbt), and I thank all their contributors for their work.
 
