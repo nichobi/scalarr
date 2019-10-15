@@ -163,7 +163,7 @@ object sonarr {
       post("command", body)
     }
 
-    def remove(series: Series) = ???
+    def remove(series: Series): Task[Unit] = Task(???)
 
     def searchSeason(season: Season)    = ???
     def searchEpisode(episode: Episode) = ???
