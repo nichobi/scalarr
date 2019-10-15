@@ -165,8 +165,17 @@ object sonarr {
 
     def remove(series: Series): Task[Unit] = Task(???)
 
-    def searchSeason(season: Season)    = ???
-    def searchEpisode(episode: Episode) = ???
+    def search(episode: Episode): Task[JValue] = {
+      val body = ("name" -> "EpisodeSearch") ~
+        ("episodeIds" -> List(episode.id))
+      post("command", body)
+    }
+    def search(season: Season): Task[JValue] = {
+      val body = ("name" -> "SeasonSearch") ~
+        ("seriesId"    -> season.seriesId) ~
+        ("seasonNumer" -> season.n)
+      post("command", body)
+    }
 
     def profiles    = get[List[Profile]]("profile")
     def rootFolders = get[List[RootFolder]]("rootfolder")
