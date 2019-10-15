@@ -13,23 +13,23 @@ object console {
     ZIO.effectTotal(print(line))
 
   class Reader() {
-    private val commandStrings = Seq("add", "exit", "series", "import").sorted
+    private val commandStrings     = Seq("search", "exit", "series", "import").sorted
     lazy val commandReader = LineReaderBuilder.builder
       .completer(new StringsCompleter(commandStrings.asJava))
       .build()
-    def readCommand(prompt: String) = ZIO.effect(commandReader.readLine(prompt))
+    def readCommand(prompt: String) = Task(commandReader.readLine(prompt))
 
     lazy val pathReader = LineReaderBuilder.builder
       .completer(new DirectoriesCompleter(os.pwd.toIO))
       .build
-    def readPath(prompt: String)   = ZIO.effect(pathReader.readLine(prompt)).map(os.Path(_, os.pwd))
+    def readPath(prompt: String)   = Task(pathReader.readLine(prompt)).map(os.Path(_, os.pwd))
     private lazy val optionReader  = LineReaderBuilder.builder.build
-    def readOption(prompt: String) = ZIO.effect(optionReader.readLine(prompt))
+    def readOption(prompt: String) = Task(optionReader.readLine(prompt))
     def readOption(prompt: String, options: Seq[String]) = {
       val optionCompletionReader = LineReaderBuilder.builder
         .completer(new StringsCompleter(options.toSeq.sorted.asJava))
         .build()
-      ZIO.effect(optionCompletionReader.readLine(prompt).trim)
+      Task(optionCompletionReader.readLine(prompt).trim)
     }
   }
   object Reader {
