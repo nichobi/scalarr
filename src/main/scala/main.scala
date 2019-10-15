@@ -55,27 +55,29 @@ object main extends App {
     val action = for {
       command <- reader.readCommand("Command: ")
       repeat <- command.split(" ").toList match {
-                 case "hello" :: _     => putStrLn("hi").as(true)
-                 case "search" :: tail => lookup(tail.mkString(" ")).as(true)
-                 case "series" :: tail => series(tail.mkString(" ")).as(true)
-                 case "import" :: _    => importFiles.as(true)
-                 case "exit" :: _      => putStrLn("Exiting...").as(false)
-                 case default :: _     => putStrLn(s"Unkown command: $default").as(true)
-                 case _                => Task.succeed(true)
+                 case "hello" :: _  => putStrLn("hi").as(true)
+                 case "search" :: _ => lookup.as(true)
+                 case "series" :: _ => series.as(true)
+                 case "import" :: _ => importFiles.as(true)
+                 case "exit" :: _   => putStrLn("Exiting...").as(false)
+                 case default :: _  => putStrLn(s"Unkown command: $default").as(true)
+                 case _             => Task.succeed(true)
                }
       _ <- if (repeat) interactive else Task.unit
     } yield ()
     action.catchAll(err => putStrLn(s"Error: $err") *> interactive)
   }
 
-  def lookup(term: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
+  def lookup(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
     for {
+      term    <- reader.readString("Query: ")
       results <- sonarr.lookup(term)
       _       <- chooseAction(results)
     } yield ()
 
-  def series(query: String)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
+  def series(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
     for {
+      query    <- reader.readString("Query: ")
       results <- sonarr.seriesSearch(query)
       _       <- chooseAction(results)
     } yield ()
