@@ -56,7 +56,7 @@ object main extends App {
       command <- reader.readCommand("Command: ")
       repeat <- command.split(" ").toList match {
                  case "hello" :: _     => putStrLn("hi").as(true)
-                 case "add" :: tail    => lookup(tail.mkString(" ")).as(true)
+                 case "search" :: tail => lookup(tail.mkString(" ")).as(true)
                  case "series" :: tail => series(tail.mkString(" ")).as(true)
                  case "import" :: _    => importFiles.as(true)
                  case "exit" :: _      => putStrLn("Exiting...").as(false)
