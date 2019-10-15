@@ -81,7 +81,7 @@ object main extends App {
 
   def series(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
     for {
-      query    <- reader.readString("Query: ")
+      query   <- reader.readString("Query: ")
       results <- sonarr.seriesSearch(query)
       _       <- chooseAction(results)
     } yield ()
