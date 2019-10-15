@@ -25,6 +25,12 @@ object console {
     def readPath(prompt: String)   = ZIO.effect(pathReader.readLine(prompt)).map(os.Path(_, os.pwd))
     private lazy val optionReader  = LineReaderBuilder.builder.build
     def readOption(prompt: String) = ZIO.effect(optionReader.readLine(prompt))
+    def readOption(prompt: String, options: Seq[String]) = {
+      val optionCompletionReader = LineReaderBuilder.builder
+        .completer(new StringsCompleter(options.toSeq.sorted.asJava))
+        .build()
+      ZIO.effect(optionCompletionReader.readLine(prompt).trim)
+    }
   }
   object Reader {
     def apply() = new Reader()

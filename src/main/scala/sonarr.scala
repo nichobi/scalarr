@@ -218,23 +218,28 @@ object sonarr {
       images: List[Map[String, String]]
   ) extends Series
 
-  case class Episode(seasonNumber: Int, episodeNumber: Int, title: String) {
+  final case class Episode(seasonNumber: Int,
+                           episodeNumber: Int,
+                           title: String,
+                           id: Int,
+                           monitored: Boolean) {
     override def toString =
-      s"""S${f"$seasonNumber%02d"}E${f"$episodeNumber%02d"} - $title"""
+      s"""${monitoredSymbol(monitored)} S${f"$seasonNumber%02d"}E${f"$episodeNumber%02d"} - $title"""
   }
 
   object Episode {
     implicit val showEpiosde: Show[Episode] = Show.fromToString
   }
 
-  case class Season(n: Int, eps: Seq[Episode]) {
-    override def toString = if (n == 0) "Specials" else s"Season $n"
+  final case class Season(n: Int, eps: Seq[Episode], seriesId: Int, monitored: Boolean) {
+    val name              = if (n == 0) "Specials" else s"Season $n"
+    override def toString = s"${monitoredSymbol(monitored)} $name"
   }
   object Season {
     implicit val showSeason: Show[Season] = Show.fromToString
   }
 
-  case class DiskSpace(path: String, freeSpace: Double, totalSpace: Double) {
+  final case class DiskSpace(path: String, freeSpace: Double, totalSpace: Double) {
     override def toString = s"$path: $percentUsed% used"
     def percentUsed       = ((1 - freeSpace / totalSpace) * 100 + 0.5).toInt
   }
