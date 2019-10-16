@@ -120,9 +120,11 @@ object sonarr {
       case Failure(x) => Failure(x)
     }
 
-    def poster(series: Series): Try[String] = posterUrl(series).flatMap(url => imgConvert(url))
+    def poster(series: Series): Task[String] =
+      Task.fromTry(posterUrl(series)).flatMap(url => imgConvert(url))
 
-    def posterOrBlank(series: Series): String = poster(series).getOrElse("      \n" * 4)
+    def posterOrBlank(series: Series): Task[String] =
+      poster(series).orElse(Task.succeed("      \n" * 4))
 
     def seriesSearch(
         query: String,

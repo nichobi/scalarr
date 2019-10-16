@@ -96,7 +96,7 @@ object actions {
         for {
           sonarr <- ZIO.environment[Sonarr]
           posters <- Task.foreachPar(sequence)(series =>
-                      Task(series -> sonarr.posterOrBlank(series)))
+                      sonarr.posterOrBlank(series).map(poster => series -> poster))
           actions <- Task.succeed(sequence.zipWithIndex.map {
                       case (series, index) =>
                         Action(IndexKey(index + 1),

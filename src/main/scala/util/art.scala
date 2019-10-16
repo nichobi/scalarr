@@ -1,16 +1,15 @@
 package scalarr.util
-import scala.util.Try
 import tiv.TerminalImageViewer
 import scalarr.util.formatting.mergeLines
 import com.softwaremill.sttp._
-import scala.util.Try
+import zio.Task
 
 object art {
 
   //The height and width values were arrived at by trial and error.
   //The relation between these numbers and the image size measured in characters is unclear.
-  def imgConvert(url: Uri): Try[String] =
-    Try(TerminalImageViewer.convert(url.toString, 27, 50))
+  def imgConvert(url: Uri): Task[String] =
+    Task.effect(TerminalImageViewer.convert(url.toString, 27, 50))
 
   def inverted(string: String): String = fansi.Color.Black(fansi.Back.White(string)).render
   def inverted(char: Char): String     = inverted(char.toString)
