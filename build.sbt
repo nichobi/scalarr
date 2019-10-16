@@ -12,7 +12,6 @@ libraryDependencies ++= Seq(
   "com.lihaoyi"           %% "fansi"         % "0.2.7",
   "org.fusesource.jansi"  % "jansi"          % "1.18",
   "dev.zio"               %% "zio"           % "1.0.0-RC15",
-  "org.typelevel"         %% "cats-core"     % "2.0.0",
   "org.json4s"            %% "json4s-native" % "3.6.7"
 )
 

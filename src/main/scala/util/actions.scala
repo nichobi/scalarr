@@ -1,12 +1,11 @@
 package scalarr.util
 
 import scalarr.main._
+import scalarr.sonarr._
 import scalarr.util.console._
 import scalarr.util.formatting.mergeLines
-import scalarr.sonarr._
+import scalarr.util.show._
 import zio._
-import cats.Show
-import cats.implicits._
 
 object actions {
   sealed trait Key {
@@ -26,7 +25,7 @@ object actions {
   }
   object Action {
     implicit val showAction: Show[Action] =
-      Show.show(action => action.toString)
+      Show(action => action.toString)
   }
 
   // The KeyInterpolator takes a key of format "pre{key}post"
@@ -69,7 +68,7 @@ object actions {
         case _ => Seq.empty[Action]
       }
   private def childrenOf(a: Any): RIO[Sonarr, Seq[Action]] = {
-    def showSeries(posters: Map[Series, String]): Show[Series] = Show.show { s =>
+    def showSeries(posters: Map[Series, String]): Show[Series] = Show { s =>
       mergeLines(
         posters(s),
         s"""${s.title} - ${s.year}
@@ -112,10 +111,10 @@ object actions {
     }
   }
   private def showActions(children: Seq[Action], actions: Seq[Action]): Task[Any] = {
-    val showActions: Show[Seq[Action]] = Show.show { seq =>
+    val showActions: Show[Seq[Action]] = Show { seq =>
       seq.map(_.show).mkString(", ")
     }
-    val showChildren: Show[Seq[Action]] = Show.show { seq =>
+    val showChildren: Show[Seq[Action]] = Show { seq =>
       seq.map(action => mergeLines(action.key.toString, action.presentation)).mkString("\n")
     }
     for {

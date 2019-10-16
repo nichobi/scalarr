@@ -1,10 +1,10 @@
 package scalarr.util
+
+import scala.collection.SortedMap
 import scalarr.main.ScalarrEnvironment
 import scalarr.util.console._
 import scalarr.util.formatting.mergeLines
-import scala.collection.SortedMap
-import cats.Show
-import cats.implicits._
+import scalarr.util.show._
 import zio._
 
 object interactive {
@@ -49,8 +49,8 @@ object interactive {
       prompt: String
   )(implicit showA: Show[A]): RIO[ScalarrEnvironment, A] = {
 
-    implicit val showFansi: Show[fansi.Str] = Show.show { _.render }
-    implicit val showMap: Show[SortedMap[Int, A]] = Show.show { sm =>
+    implicit val showFansi: Show[fansi.Str] = Show(_.render)
+    implicit val showMap: Show[SortedMap[Int, A]] = Show { sm =>
       sm.map { case (i, x) => mergeLines(show"(${fansi.Color.LightBlue(i.toString)})", x.show) }
         .mkString("\n")
     }

@@ -1,9 +1,9 @@
 package scalarr.util
-import scala.jdk.CollectionConverters._
+
 import org.jline.reader.LineReaderBuilder
 import org.jline.reader.impl.completer.StringsCompleter
 import org.jline.builtins.Completers.DirectoriesCompleter
-
+import scala.jdk.CollectionConverters._
 import zio._
 
 object console {

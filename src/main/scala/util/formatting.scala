@@ -1,4 +1,5 @@
 package scalarr.util
+
 import org.fusesource.jansi.AnsiString
 
 object formatting {

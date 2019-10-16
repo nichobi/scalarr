@@ -1,13 +1,13 @@
 package scalarr
+
 import com.typesafe.config.{Config, ConfigFactory}
+import scalarr.sonarr._
+import scalarr.util.actions._
+import scalarr.util.art.generateLogo
 import scalarr.util.console.{putStrLn, Reader}
 import scalarr.util.interactive._
-import scalarr.util.art.generateLogo
-import scalarr.sonarr._
-import cats.Show
-import cats.implicits._
+import scalarr.util.show._
 import zio.{App, IO, RIO, Task, ZIO}
-import scalarr.util.actions._
 
 object main extends App {
   case class ScalarrEnvironment(sonarr: Sonarr, reader: Reader, config: ScalarrConfig)
@@ -110,7 +110,7 @@ object main extends App {
     } yield ()
 
   def importFiles: RIO[ScalarrEnvironment, Unit] = {
-    val showCopyBoolean: Show[Boolean] = Show.show(if (_) "Copy" else "Move")
+    val showCopyBoolean: Show[Boolean] = Show(if (_) "Copy" else "Move")
     for {
       sonarr <- ZIO.access[ScalarrEnvironment](_.sonarr)
       path   <- ZIO.accessM[ScalarrEnvironment](_.reader.readPath("Path: "))

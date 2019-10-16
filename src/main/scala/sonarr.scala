@@ -1,15 +1,15 @@
 package scalarr
 
-import scalarr.util.formatting.monitoredSymbol
 import com.softwaremill.sttp._
-import scala.util.{Failure, Success, Try}
-import util.art.imgConvert
-import cats.Show
-import zio._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
 import org.json4s.native.Serialization._
+import scala.util.{Failure, Success, Try}
+import scalarr.util.formatting.monitoredSymbol
+import scalarr.util.show._
+import scalarr.util.art.imgConvert
+import zio._
 
 object sonarr {
   class Sonarr(val address: String, val port: Int, apiKey: String) {
@@ -244,7 +244,7 @@ object sonarr {
   }
   object Series {
     implicit val showSeries: Show[Series] =
-      Show.show(s => s"${s.title} (${s.year}) - tvdb:${s.tvdbId}")
+      Show(s => s"${s.title} (${s.year}) - tvdb:${s.tvdbId}")
   }
 
   final case class AddedSeries(
@@ -262,7 +262,7 @@ object sonarr {
   }
   object AddedSeries {
     implicit val showAddedSeries: Show[AddedSeries] =
-      Show.show(s => s"${s.title} (${s.year}) - id:${s.id}")
+      Show(s => s"${s.title} (${s.year}) - id:${s.id}")
   }
   case class SeasonInfo(seasonNumber: Int, monitored: Boolean, statistics: SeasonStatistics)
   case class SeasonStatistics(
@@ -309,20 +309,20 @@ object sonarr {
   }
   object DiskSpace {
     implicit val showDiskSpace: Show[DiskSpace] =
-      Show.show(ds => s"${ds.path}: ${ds.percentUsed}% used")
+      Show(ds => s"${ds.path}: ${ds.percentUsed}% used")
   }
 
   final case class Profile(id: Int, name: String) {
     override def toString = name
   }
   object Profile {
-    implicit val showProfile: Show[Profile] = Show.show(_.name)
+    implicit val showProfile: Show[Profile] = Show(_.name)
   }
 
   final case class RootFolder(id: Int, path: String) {
     override def toString = path
   }
   object RootFolder {
-    implicit val showRootFolder: Show[RootFolder] = Show.show(_.path)
+    implicit val showRootFolder: Show[RootFolder] = Show(_.path)
   }
 }

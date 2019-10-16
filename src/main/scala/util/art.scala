@@ -1,7 +1,8 @@
 package scalarr.util
-import tiv.TerminalImageViewer
-import scalarr.util.formatting.mergeLines
+
 import com.softwaremill.sttp._
+import scalarr.util.formatting.mergeLines
+import tiv.TerminalImageViewer
 import zio.Task
 
 object art {
