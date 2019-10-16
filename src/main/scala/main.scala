@@ -6,10 +6,12 @@ import scalarr.util.art.generateLogo
 import scalarr.sonarr._
 import cats.Show
 import cats.implicits._
-import zio.{App, IO, Task}
+import zio.{App, IO, RIO, Task, ZIO}
 import scalarr.util.actions._
 
 object main extends App {
+  case class ScalarrEnvironment(sonarr: Sonarr, reader: Reader, config: ScalarrConfig)
+  case class ScalarrConfig(resultSize: Int)
   def getConfigPath: Task[os.Path] =
     Task(sys.env("XDG_CONFIG_HOME"))
       .map(os.Path(_))
@@ -38,25 +40,32 @@ object main extends App {
       key     <- Task(config.getString("sonarr.apikey"))
       sonarr  <- Task(Sonarr(address, port, key))
     } yield sonarr
+  def createScalarrConfig(config: Config) =
+    for {
+      resultSize <- Task(config.getInt("scalarr.resultSize")).orElse(Task.succeed(5))
+    } yield ScalarrConfig(resultSize)
 
   def run(args: List[String]): IO[Nothing, Int] =
     main.foldM(err => putStrLn(s"Error: ${err.getMessage}").as(1), _ => Task.succeed(0))
 
   def main: Task[Unit] =
     for {
-      _          <- putStrLn(generateLogo)
-      configPath <- getConfigPath
-      _          <- createConfigFile(configPath)
-      config     <- readConfig(configPath)
-      sonarr     <- createSonarr(config)
-      version    <- sonarr.version
-      _          <- putStrLn(s"Connected to Sonarr $version at ${sonarr.address}:${sonarr.port}")
-      reader     <- Task.succeed(Reader())
-      _          <- interactive(sonarr, reader)
+      _             <- putStrLn(generateLogo)
+      configPath    <- getConfigPath
+      _             <- createConfigFile(configPath)
+      config        <- readConfig(configPath)
+      sonarr        <- createSonarr(config)
+      scalarrConfig <- createScalarrConfig(config)
+      version       <- sonarr.version
+      _             <- putStrLn(s"Connected to Sonarr $version at ${sonarr.address}:${sonarr.port}")
+      reader        <- Task.succeed(Reader())
+      environment   <- Task.succeed(ScalarrEnvironment(sonarr, reader, scalarrConfig))
+      _             <- interactive.provide(environment)
     } yield ()
 
-  def interactive(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
+  def interactive: RIO[ScalarrEnvironment, Unit] = {
     val action = for {
+      reader  <- ZIO.access[ScalarrEnvironment](_.reader)
       command <- reader.readCommand("Command: ")
       repeat <- command.split(" ").toList match {
                  case "hello" :: _  => putStrLn("hi").as(true)
@@ -72,22 +81,25 @@ object main extends App {
     action.catchAll(err => putStrLn(s"Error: $err") *> interactive)
   }
 
-  def lookup(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
+  def lookup: RIO[ScalarrEnvironment, Unit] =
     for {
-      term    <- reader.readString("Query: ")
-      results <- sonarr.lookup(term)
-      _       <- chooseAction(results)
+      resultSize <- ZIO.access[ScalarrEnvironment](_.config.resultSize)
+      term       <- ZIO.accessM[ScalarrEnvironment](_.reader.readString("Query: "))
+      results    <- ZIO.accessM[ScalarrEnvironment](_.sonarr.lookup(term, resultSize))
+      _          <- chooseAction(results)
     } yield ()
 
-  def series(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
+  def series: RIO[ScalarrEnvironment, Unit] =
     for {
-      query   <- reader.readString("Query: ")
-      results <- sonarr.seriesSearch(query)
-      _       <- chooseAction(results)
+      resultSize <- ZIO.access[ScalarrEnvironment](_.config.resultSize)
+      query      <- ZIO.accessM[ScalarrEnvironment](_.reader.readString("Query: "))
+      results    <- ZIO.accessM[ScalarrEnvironment](_.sonarr.seriesSearch(query, resultSize))
+      _          <- chooseAction(results)
     } yield ()
 
-  def add(series: Series)(implicit sonarr: Sonarr, reader: Reader): Task[Unit] =
+  def add(series: Series): RIO[ScalarrEnvironment, Unit] =
     for {
+      sonarr          <- ZIO.access[ScalarrEnvironment](_.sonarr)
       rootFolders     <- sonarr.rootFolders
       rootFolder      <- chooseFrom(rootFolders, "root folder")
       qualityProfiles <- sonarr.profiles
@@ -96,11 +108,12 @@ object main extends App {
       _               <- putStrLn(s"Added $series")
     } yield ()
 
-  def importFiles(implicit sonarr: Sonarr, reader: Reader): Task[Unit] = {
+  def importFiles: RIO[ScalarrEnvironment, Unit] = {
     val showCopyBoolean: Show[Boolean] = Show.show(if (_) "Copy" else "Move")
     for {
-      path <- reader.readPath("Path: ")
-      copy <- chooseFrom(Seq(true, false), "import mode")(reader, showCopyBoolean)
+      sonarr <- ZIO.access[ScalarrEnvironment](_.sonarr)
+      path   <- ZIO.accessM[ScalarrEnvironment](_.reader.readPath("Path: "))
+      copy   <- chooseFrom(Seq(true, false), "import mode")(showCopyBoolean)
     } yield sonarr.importPath(path, copy)
   }
 }

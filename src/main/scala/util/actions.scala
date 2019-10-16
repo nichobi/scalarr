@@ -4,7 +4,7 @@ import scalarr.main._
 import scalarr.util.console._
 import scalarr.util.formatting.mergeLines
 import scalarr.sonarr._
-import zio.Task
+import zio._
 import cats.Show
 import cats.implicits._
 
@@ -20,7 +20,7 @@ object actions {
     override def toString = "(" + fansi.Color.LightBlue(key.toUpperCase) + ")"
   }
 
-  case class Action(key: Key, task: Task[Any], presentation: String = "") {
+  case class Action(key: Key, task: RIO[ScalarrEnvironment, Any], presentation: String = "") {
     override def toString =
       if (presentation != "") s"${key.toString} $presentation" else key.toString
   }
@@ -40,31 +40,35 @@ object actions {
     }
   }
 
-  private def actionsOf(a: Any)(implicit sonarr: Sonarr, reader: Reader): Seq[Action] = a match {
-    case series: AddedSeries =>
-      Seq(
-        if (series.monitored) Action(key"un{m}onitor", sonarr.setMonitored(series, false))
-        else Action(key"{m}onitor", sonarr.setMonitored(series, true))
-      )
-    case series: LookupSeries =>
-      Seq(
-        Action(key"{a}dd", add(series))
-      )
-    case season: Season =>
-      Seq(
-        Action(key"{s}earch", sonarr.search(season)),
-        if (season.monitored) Action(key"un{m}onitor", sonarr.setMonitored(season, false))
-        else Action(key"{m}onitor", sonarr.setMonitored(season, true))
-      )
-    case episode: Episode =>
-      Seq(
-        Action(key"{s}earch", sonarr.search(episode)),
-        if (episode.monitored) Action(key"un{m}onitor", sonarr.setMonitored(episode, false))
-        else Action(key"{m}onitor", sonarr.setMonitored(episode, true))
-      )
-    case _ => Seq.empty[Action]
-  }
-  private def childrenOf(a: Any)(implicit sonarr: Sonarr, reader: Reader): Task[Seq[Action]] = {
+  private def actionsOf(a: Any): RIO[Sonarr, Seq[Action]] =
+    for {
+      sonarr <- ZIO.environment[Sonarr]
+    } yield
+      a match {
+        case series: AddedSeries =>
+          Seq(
+            if (series.monitored) Action(key"un{m}onitor", sonarr.setMonitored(series, false))
+            else Action(key"{m}onitor", sonarr.setMonitored(series, true))
+          )
+        case series: LookupSeries =>
+          Seq(
+            Action(key"{a}dd", add(series))
+          )
+        case season: Season =>
+          Seq(
+            Action(key"{s}earch", sonarr.search(season)),
+            if (season.monitored) Action(key"un{m}onitor", sonarr.setMonitored(season, false))
+            else Action(key"{m}onitor", sonarr.setMonitored(season, true))
+          )
+        case episode: Episode =>
+          Seq(
+            Action(key"{s}earch", sonarr.search(episode)),
+            if (episode.monitored) Action(key"un{m}onitor", sonarr.setMonitored(episode, false))
+            else Action(key"{m}onitor", sonarr.setMonitored(episode, true))
+          )
+        case _ => Seq.empty[Action]
+      }
+  private def childrenOf(a: Any): RIO[Sonarr, Seq[Action]] = {
     def showSeries(posters: Map[Series, String]): Show[Series] = Show.show { s =>
       mergeLines(
         posters(s),
@@ -74,9 +78,13 @@ object actions {
     }
     a match {
       case series: AddedSeries =>
-        sonarr
-          .seasons(series)
-          .map(_.map(season => Action(IndexKey(season.n), chooseAction(season), season.toString)))
+        for {
+          sonarr <- ZIO.environment[Sonarr]
+          actions <- sonarr
+                      .seasons(series)
+                      .map(_.map(season =>
+                        Action(IndexKey(season.n), chooseAction(season), season.toString)))
+        } yield actions
       case season: Season =>
         Task.succeed(
           season.eps
@@ -86,6 +94,7 @@ object actions {
       case sequence: Seq[Series]
           if (!sequence.isEmpty && sequence.forall(_.isInstanceOf[Series])) =>
         for {
+          sonarr <- ZIO.environment[Sonarr]
           posters <- Task.foreachPar(sequence)(series =>
                       Task(series -> sonarr.posterOrBlank(series)))
           actions <- Task.succeed(sequence.zipWithIndex.map {
@@ -115,32 +124,26 @@ object actions {
     } yield ()
 
   }
-  private def pickAction(actions: Map[String, Action])(implicit reader: Reader): Task[Action] = {
-    val result: Task[Action] = {
-      if (actions.size == 0)
-        Task.fail(new java.util.NoSuchElementException("No actions to pick from"))
-      else {
-        (for {
-          key    <- reader.readOption(s"Choose action: ", actions.keys.toSeq).map(_.toLowerCase)
-          action <- Task(actions(key))
-        } yield action).catchAll(err =>
-          putStrLn(s"Error: ${err.getMessage}") *> pickAction(actions))
-      }
+  private def pickAction(actions: Map[String, Action]): RIO[Reader, Action] =
+    if (actions.size == 0)
+      Task.fail(new java.util.NoSuchElementException("No actions to pick from"))
+    else {
+      (for {
+        reader <- ZIO.environment[Reader]
+        key    <- reader.readOption(s"Choose action: ", actions.keys.toSeq).map(_.toLowerCase)
+        action <- Task(actions(key))
+      } yield action).catchAll(err => putStrLn(s"Error: ${err.getMessage}") *> pickAction(actions))
     }
-    //result.foldM(
-    //  err => Task.fail(new Exception("Failure picking action: " + err.getMessage, err)),
-    //  chosen => putStrLn(s"$chosen") *> Task(chosen)
-    //)
-    result
-  }
 
-  def chooseAction(input: Any)(implicit sonarr: Sonarr, reader: Reader): Task[Any] =
+  def chooseAction(input: Any): RIO[ScalarrEnvironment, Any] =
     (for {
-      children  <- childrenOf(input)
-      actions   = actionsOf(input) :+ Action(key"{q}uit", Task.unit)
+      reader    <- ZIO.access[ScalarrEnvironment](_.reader)
+      sonarr    <- ZIO.access[ScalarrEnvironment](_.sonarr)
+      children  <- childrenOf(input).provide(sonarr)
+      actions   <- actionsOf(input).provide(sonarr).map(_ :+ Action(key"{q}uit", Task.unit))
       optionMap = (children ++ actions).map(action => action.key.key -> action).toMap
       _         <- showActions(children, actions)
-      action    <- pickAction(optionMap)
+      action    <- pickAction(optionMap).provide(reader)
       _         <- putStrLn(s"Chosen: ${action.key}")
     } yield action.task).flatten
 }
