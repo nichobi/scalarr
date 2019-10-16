@@ -3,9 +3,8 @@ import org.fusesource.jansi.AnsiString
 
 object formatting {
   def mergeLines(strings: String*): String = {
-    val columns =
-      strings.map(_.split('\n').toSeq).map(lines => TextColumn(lines))
-    val maxHeight = columns.map(_.height).max
+    val columns   = strings.map(_.split('\n').toSeq).map(lines => TextColumn(lines))
+    val maxHeight = columns.map(_.height).maxOption.getOrElse(0)
     val lines = for (i <- 0 until maxHeight) yield {
       columns.map(_.get(i)).mkString(" ")
     }
@@ -23,7 +22,7 @@ object formatting {
 
   final private case class WrappedString(private val input: String) {
     private val jansi = new AnsiString(input + scala.Console.RESET)
-    def size  = jansi.getPlain.toString.size
+    def size          = jansi.getPlain.toString.size
 
     override def toString = jansi.toString + scala.Console.RESET
     def +(other: String)  = WrappedString(jansi.toString + other)
