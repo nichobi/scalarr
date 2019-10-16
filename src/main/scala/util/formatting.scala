@@ -7,28 +7,26 @@ object formatting {
       strings.map(_.split('\n').toSeq).map(lines => TextColumn(lines))
     val maxHeight = columns.map(_.height).max
     val lines = for (i <- 0 until maxHeight) yield {
-      columns.foldLeft("")(_ + _.get(i) + " ")
+      columns.map(_.get(i)).mkString(" ")
     }
     lines.mkString("\n")
   }
 
-  private final case class TextColumn(rawLines: Seq[String]) {
-    val wrappedLines = rawLines.map(l => WrappedString(l))
-    val height       = wrappedLines.size
-    val width        = wrappedLines.map(_.size).max
-    val lines        = wrappedLines.map(l => l + (" " * (width - l.size)))
+  final private case class TextColumn(private val rawLines: Seq[String]) {
+    private val wrappedLines = rawLines.map(l => WrappedString(l))
+    val height               = wrappedLines.size
+    val width                = wrappedLines.map(_.size).max
+    private val paddedLines  = wrappedLines.map(l => l + (" " * (width - l.size))).toVector
 
-    def get(index: Int) =
-      if (lines.indices.contains(index)) lines(index)
-      else " " * width
+    def get(index: Int) = paddedLines.lift(index).getOrElse(" " * width)
   }
 
-  private final case class WrappedString(input: String) {
-    val jansi = new AnsiString(input + scala.Console.RESET)
+  final private case class WrappedString(private val input: String) {
+    private val jansi = new AnsiString(input + scala.Console.RESET)
     def size  = jansi.getPlain.toString.size
 
-    override def toString               = jansi.toString + scala.Console.RESET
-    def +(other: String): WrappedString = WrappedString(jansi.toString + other)
+    override def toString = jansi.toString + scala.Console.RESET
+    def +(other: String)  = WrappedString(jansi.toString + other)
   }
 
   def monitoredSymbol(monitored: Boolean) = if (monitored) "●" else "○"
