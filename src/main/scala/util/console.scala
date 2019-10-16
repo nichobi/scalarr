@@ -12,10 +12,17 @@ object console {
   def putStr(line: String): UIO[Unit] =
     ZIO.effectTotal(print(line))
 
-  class Reader() {
+  trait Reader {
+    def readString(prompt: String): Task[String]
+    def readCommand(prompt: String): Task[String]
+    def readPath(prompt: String): Task[os.Path]
+    def readOption(prompt: String, options: Seq[String]): Task[String]
+  }
+  class LiveReader extends Reader {
     lazy val stringReader          = LineReaderBuilder.builder.build()
     def readString(prompt: String) = Task(stringReader.readLine(prompt))
-    private val commandStrings     = Seq("search", "exit", "series", "import").sorted
+
+    private val commandStrings = Seq("search", "exit", "series", "import").sorted
     lazy val commandReader = LineReaderBuilder.builder
       .completer(new StringsCompleter(commandStrings.asJava))
       .build()
@@ -24,17 +31,16 @@ object console {
     lazy val pathReader = LineReaderBuilder.builder
       .completer(new DirectoriesCompleter(os.pwd.toIO))
       .build
-    def readPath(prompt: String)   = Task(pathReader.readLine(prompt)).map(os.Path(_, os.pwd))
-    private lazy val optionReader  = LineReaderBuilder.builder.build
-    def readOption(prompt: String) = Task(optionReader.readLine(prompt))
+    def readPath(prompt: String) = Task(pathReader.readLine(prompt)).map(os.Path(_, os.pwd))
+
     def readOption(prompt: String, options: Seq[String]) = {
-      val optionCompletionReader = LineReaderBuilder.builder
+      val optionReader = LineReaderBuilder.builder
         .completer(new StringsCompleter(options.toSeq.sorted.asJava))
         .build()
-      Task(optionCompletionReader.readLine(prompt).trim)
+      Task(optionReader.readLine(prompt).trim)
     }
   }
   object Reader {
-    def apply() = new Reader()
+    def apply() = new LiveReader
   }
 }

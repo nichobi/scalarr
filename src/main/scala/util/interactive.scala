@@ -30,7 +30,7 @@ object interactive {
     (for {
       reader      <- ZIO.environment[Reader]
       quitFansi   <- Task.succeed(fansi.Color.LightBlue("Q").render + "uit")
-      indexString <- reader.readOption(s"Choose $prompt or $quitFansi: ")
+      indexString <- reader.readString(s"Choose $prompt or $quitFansi: ")
       value <- if (indexString.toLowerCase == "q") Task.fail(QuitException())
               else attemptToRead(indexString, options)
     } yield value).catchSome {
