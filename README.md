@@ -22,13 +22,13 @@ This project is set up with [scala build tool, sbt](http://www.scala-sbt.org). T
 
 * Run either of these commands and sbt will download and prepare all [dependencies](https://github.com/nichobi/scalarr/blob/master/build.sbt):
   * `sbt run` to compile and run Scalarr on the fly
-  * `sbt assembly` to build a jar of Scalarr and all its required libraries, in the directory `target/scala-2.13/`. The file will be called something like `scalarr-assembly-1.0.1.jar`
+  * `sbt assembly` to build a jar of Scalarr and all its required libraries, in the directory `target/scala-2.13/`. The file will be called something like `scalarr-assembly-1.0.2.jar`
   
 ## Running scalarr
 After you have your jar file, you can run it with java. For example if you have a file `scalarr.jar` in your current directory, run it with:
 `java -jar scalarr.jar`
 Or if you've just built it: 
-`java -jar target/scala-2.13/scalarr-assembly-1.0.1.jar`
+`java -jar target/scala-2.13/scalarr-assembly-1.0.2.jar`
   
 On first launch a config file will be placed in your home directory's `.config` folder. Fill in your address, port and Sonarr API key and then run scalarr again to connect to your server. Once you're connected, you can cycle through available commands with the tab key.
   
