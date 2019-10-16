@@ -21,14 +21,15 @@ object main extends App {
   def createConfigFile(configFile: os.Path): Task[Unit] =
     for {
       configFolder <- Task(configFile / os.up)
-      _            <- if (!os.exists(configFolder)) Task(os.makeDir.all(configFolder)) else Task.unit
-      _ <- if (!os.exists(configFile)) for {
-            defaultConfig <- Task(os.read(os.resource / "scalarr.conf"))
-            _             <- Task(os.write(configFile, defaultConfig))
-            _ <- putStrLn(
-                  s"Wrote new config file to ${configFile.toString}\nPlease edit it and restart Scalarr")
-          } yield ()
-          else Task.unit
+      _            <- Task.when(!os.exists(configFolder))(Task(os.makeDir.all(configFolder)))
+      _ <- Task.when(!os.exists(configFile)) {
+            for {
+              defaultConfig <- Task(os.read(os.resource / "scalarr.conf"))
+              _             <- Task(os.write(configFile, defaultConfig))
+              _             <- putStrLn(s"""Wrote new config file to ${configFile.toString}
+                               |Please edit it and restart Scalarr""".stripMargin)
+            } yield ()
+          }
     } yield ()
 
   def readConfig(configFile: os.Path): Task[Config] = Task(ConfigFactory.parseFile(configFile.toIO))
