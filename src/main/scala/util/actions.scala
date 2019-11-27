@@ -42,31 +42,30 @@ object actions {
   private def actionsOf(a: Any): RIO[Sonarr, Seq[Action]] =
     for {
       sonarr <- ZIO.environment[Sonarr]
-    } yield
-      a match {
-        case series: AddedSeries =>
-          Seq(
-            if (series.monitored) Action(key"un{m}onitor", sonarr.setMonitored(series, false))
-            else Action(key"{m}onitor", sonarr.setMonitored(series, true))
-          )
-        case series: LookupSeries =>
-          Seq(
-            Action(key"{a}dd", add(series))
-          )
-        case season: Season =>
-          Seq(
-            Action(key"{s}earch", sonarr.search(season)),
-            if (season.monitored) Action(key"un{m}onitor", sonarr.setMonitored(season, false))
-            else Action(key"{m}onitor", sonarr.setMonitored(season, true))
-          )
-        case episode: Episode =>
-          Seq(
-            Action(key"{s}earch", sonarr.search(episode)),
-            if (episode.monitored) Action(key"un{m}onitor", sonarr.setMonitored(episode, false))
-            else Action(key"{m}onitor", sonarr.setMonitored(episode, true))
-          )
-        case _ => Seq.empty[Action]
-      }
+    } yield a match {
+      case series: AddedSeries =>
+        Seq(
+          if (series.monitored) Action(key"un{m}onitor", sonarr.setMonitored(series, false))
+          else Action(key"{m}onitor", sonarr.setMonitored(series, true))
+        )
+      case series: LookupSeries =>
+        Seq(
+          Action(key"{a}dd", add(series))
+        )
+      case season: Season =>
+        Seq(
+          Action(key"{s}earch", sonarr.search(season)),
+          if (season.monitored) Action(key"un{m}onitor", sonarr.setMonitored(season, false))
+          else Action(key"{m}onitor", sonarr.setMonitored(season, true))
+        )
+      case episode: Episode =>
+        Seq(
+          Action(key"{s}earch", sonarr.search(episode)),
+          if (episode.monitored) Action(key"un{m}onitor", sonarr.setMonitored(episode, false))
+          else Action(key"{m}onitor", sonarr.setMonitored(episode, true))
+        )
+      case _ => Seq.empty[Action]
+    }
   private def childrenOf(a: Any): RIO[Sonarr, Seq[Action]] = {
     def showSeries(posters: Map[Series, String]): Show[Series] = Show { s =>
       mergeLines(
@@ -81,26 +80,33 @@ object actions {
           sonarr <- ZIO.environment[Sonarr]
           actions <- sonarr
                       .seasons(series)
-                      .map(_.map(season =>
-                        Action(IndexKey(season.n), chooseAction(season), season.toString)))
+                      .map(
+                        _.map(season =>
+                          Action(IndexKey(season.n), chooseAction(season), season.toString)
+                        )
+                      )
         } yield actions
       case season: Season =>
         Task.succeed(
           season.eps
             .map(episode =>
-              Action(IndexKey(episode.episodeNumber), chooseAction(episode), episode.toString))
+              Action(IndexKey(episode.episodeNumber), chooseAction(episode), episode.toString)
+            )
         )
       case sequence: Seq[Series]
           if (!sequence.isEmpty && sequence.forall(_.isInstanceOf[Series])) =>
         for {
           sonarr <- ZIO.environment[Sonarr]
           posters <- Task.foreachPar(sequence)(series =>
-                      sonarr.posterOrBlank(series).map(poster => series -> poster))
+                      sonarr.posterOrBlank(series).map(poster => series -> poster)
+                    )
           actions <- Task.succeed(sequence.zipWithIndex.map {
                       case (series, index) =>
-                        Action(IndexKey(index + 1),
-                               chooseAction(series),
-                               showSeries(posters.toMap).show(series))
+                        Action(
+                          IndexKey(index + 1),
+                          chooseAction(series),
+                          showSeries(posters.toMap).show(series)
+                        )
                     })
         } yield actions
       case sequence: Seq[_] =>

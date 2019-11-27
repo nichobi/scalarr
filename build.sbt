@@ -15,10 +15,12 @@ libraryDependencies ++= Seq(
   "org.json4s"            %% "json4s-native" % "3.6.7"
 )
 
-scalacOptions := Seq("-unchecked",
-                     "-deprecation",
-                     "-Ywarn-dead-code",
-                     "-Ywarn-unused",
-                     "-feature",
-                     "-Xlint")
+scalacOptions := Seq(
+  "-unchecked",
+  "-deprecation",
+  "-Ywarn-dead-code",
+  "-Ywarn-unused",
+  "-feature",
+  "-Xlint"
+)
 scalacOptions in (Compile, console) ++= Seq("-Ywarn-unused:-imports")

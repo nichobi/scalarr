@@ -24,20 +24,22 @@ object sonarr {
       Task(parse(json)).map(_.extract[A])
 
     class SeriesSerializer
-        extends CustomSerializer[Series](_ =>
-          ({
-            case x: JObject =>
-              val id = (x \ "id").extract[Option[Int]]
-              id match {
-                case Some(_) =>
-                  x.extract[AddedSeries]
-                case None =>
-                  x.extract[LookupSeries]
-              }
-          }, {
-            case x: Series =>
-              parse(write(x))
-          }))
+        extends CustomSerializer[Series](
+          _ =>
+            ({
+              case x: JObject =>
+                val id = (x \ "id").extract[Option[Int]]
+                id match {
+                  case Some(_) =>
+                    x.extract[AddedSeries]
+                  case None =>
+                    x.extract[LookupSeries]
+                }
+            }, {
+              case x: Series =>
+                parse(write(x))
+            })
+        )
 
     def get[A](endpoint: String, params: (String, String)*)(implicit m: Manifest[A]): Task[A] = {
       val request = sttp
@@ -282,11 +284,13 @@ object sonarr {
       images: List[Map[String, String]]
   ) extends Series
 
-  final case class Episode(seasonNumber: Int,
-                           episodeNumber: Int,
-                           title: String,
-                           id: Int,
-                           monitored: Boolean) {
+  final case class Episode(
+      seasonNumber: Int,
+      episodeNumber: Int,
+      title: String,
+      id: Int,
+      monitored: Boolean
+  ) {
     override def toString =
       s"""${monitoredSymbol(monitored)} S${f"$seasonNumber%02d"}E${f"$episodeNumber%02d"} - $title"""
   }

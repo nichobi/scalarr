@@ -17,7 +17,8 @@ object interactive {
   }
 
   def chooseFrom[A](options: Seq[A], prompt: String, indexer: A => Int)(
-      implicit showA: Show[A]): RIO[ScalarrEnvironment, A] = {
+      implicit showA: Show[A]
+  ): RIO[ScalarrEnvironment, A] = {
     val map = SortedMap.from(options.map(o => indexer(o) -> o))
     chooseFromHelper(map, prompt)
   }
