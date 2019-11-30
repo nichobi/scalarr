@@ -221,7 +221,7 @@ object sonarr {
         version = status("version").extract[String]
       } yield version
 
-    override def toString = s"""Scalarr($address, $port, REDACTED)"""
+    override def toString = s"""Sonarr($address, $port, REDACTED)"""
   }
 
   object Sonarr {
